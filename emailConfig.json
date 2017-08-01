@@ -1,6 +1,6 @@
 {
-  "host": "smtp.live.com",
+  "host": "smtp.example.com",
   "port": 587,
-  "user": "vlado_tomanoski@hotmail.com",
-  "password": "hppavilion"
+  "user": "user_mail",
+  "password": "user_password"
 }
