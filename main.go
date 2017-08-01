@@ -3,6 +3,8 @@
 package main
 
 import (
+	"gopkg.in/gomail.v2"
+
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 	"userRegistration-microservice/app"
@@ -22,7 +24,7 @@ func main() {
 	c := NewSwaggerController(service)
 	app.MountSwaggerController(service, c)
 	// Mount "user" controller
-	c2 := NewUserController(service)
+	c2 := NewUserController(service, &Message{msg: gomail.NewMessage()})
 	app.MountUserController(service, c2)
 
 	// Start service

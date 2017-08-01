@@ -12,12 +12,33 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"html/template"
 	"userRegistration-microservice/app"
 )
+
+// CollectionEmail is an interface to access to the email func.
+type CollectionEmail interface {
+	SendEmail(id string, username string, email string, template string) error
+}
 
 // UserController implements the user resource.
 type UserController struct {
 	*goa.Controller
+	emailCollection CollectionEmail
+}
+
+// Message wraps a gomail.Message to embed methods in models.
+type Message struct {
+	msg *gomail.Message
+}
+
+// MockMessage for testing 
+type MockMessage struct {}
+
+// For the email template
+type email struct {
+    ID string
+    Name string
 }
 
 // EmailConfig represents configuration for email.
@@ -41,8 +62,11 @@ type UserProfile struct {
 }
 
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service) *UserController {
-	return &UserController{Controller: service.NewController("UserController")}
+func NewUserController(service *goa.Service, emailCollection CollectionEmail) *UserController {
+	return &UserController{
+		Controller: service.NewController("UserController"),
+		emailCollection: emailCollection,
+	}
 }
 
 // Register runs the register action.
@@ -55,9 +79,9 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	// Create new user from payload
-	jsonUser, error := json.Marshal(ctx.Payload)
-	if error != nil {
-		return error
+	jsonUser, errJsonUser := json.Marshal(ctx.Payload)
+	if errJsonUser != nil {
+		return errJsonUser
 	}
 	resp, err := CreateNewUser(client, jsonUser, urlConfig.UserService)
 	if err != nil {
@@ -103,8 +127,16 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		return ctx.BadRequest(goa.ErrBadRequest(err))
 	}
 
+	// Create the variables for the template
+	userEmail := email{user.ID, user.Fullname}
+
+	template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
+	if errTemp != nil {
+		return errTemp
+	}
+
 	// Send email for verification
-	if err = SendEmail(user.ID, user.Fullname, user.Email); err != nil {
+	if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
 		return err
 	}
 
@@ -124,23 +156,26 @@ func UpdateUserProfile(client *http.Client, payload []byte, id string, url strin
 }
 
 // Send email for verification.
-func SendEmail(id string, username string, email string) error {
+func (mail *Message) SendEmail(id string, username string, email string, template string) error {
 	emailConfig, _ := EmailConfigFromFile("./emailConfig.json")
 
-	m := gomail.NewMessage()
-	m.SetHeader("From", emailConfig.User)
-	m.SetHeader("To", email)
-	m.SetHeader("Subject", "Verify Your Account!")
-	m.SetBody("text/html", fmt.Sprintf("Hello %s, <p><a href=\"http://localhost:8081/users/%s/verify\">Verify your account</a></p>", username, id))
+	mail.msg.SetHeader("From", emailConfig.User)
+	mail.msg.SetHeader("To", email)
+	mail.msg.SetHeader("Subject", "Verify Your Account!")
+	mail.msg.SetBody("text/html", template)
 
 	d := gomail.NewDialer(emailConfig.Host, emailConfig.Port, emailConfig.User, emailConfig.Password)
 
-	if err := d.DialAndSend(m); err != nil {
+	if err := d.DialAndSend(mail.msg); err != nil {
 		return err
 	}
 	return nil
 }
 
+// Mock send email for verification.
+func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
+	return nil
+}
 // Read email configuratio from config file.
 func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
 	var config EmailConfig
@@ -180,6 +215,25 @@ func UrlConfigFromFile(configFile string) (*UrlConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// Create a template using emailTemplate.html
+func ParseTemplate(templateFileName string, data interface{}) (string, error) {
+    tmpl, err := template.ParseFiles(templateFileName)
+    if err != nil {
+        return "", err
+    }
+
+    // Stores the parsed template
+    var buff bytes.Buffer 
+
+    // Send the parsed template to buff 
+    err = tmpl.Execute(&buff, data)
+    if err != nil {
+        return "", err
+    }
+
+    return buff.String(), nil
 }
 
 // Because http.Client does not provide PUT method

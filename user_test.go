@@ -13,7 +13,7 @@ import (
 
 var (
 	service = goa.New("user-test")
-	ctrl    = NewUserController(service)
+	ctrl    = NewUserController(service, &MockMessage{})
 )
 
 // Call generated test helper, this checks that the returned media type is of the
@@ -24,7 +24,7 @@ func TestRegisterUserCreated(t *testing.T) {
 		Fullname:   "fullname",
 		Username:   "username",
 		Password:   "password",
-		Email:      "vladimir.tomanovski@keitaro.com",
+		Email:      "vexample@mail.com",
 		ExternalID: "qwerc461f9f8eb02aae053f3",
 		Roles:      []string{"admin", "user"},
 	}
