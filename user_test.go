@@ -24,7 +24,7 @@ func TestRegisterUserCreated(t *testing.T) {
 		Fullname:   "fullname",
 		Username:   "username",
 		Password:   "password",
-		Email:      "vexample@mail.com",
+		Email:      "example@mail.com",
 		ExternalID: "qwerc461f9f8eb02aae053f3",
 		Roles:      []string{"admin", "user"},
 	}
