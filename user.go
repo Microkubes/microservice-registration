@@ -5,16 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/goadesign/goa"
-	"gopkg.in/gomail.v2"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"html/template"
+
+	gomail "gopkg.in/gomail.v2"
+
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/afex/hystrix-go/hystrix"
+	"github.com/goadesign/goa"
 )
 
 // CollectionEmail is an interface to access to the email func.
@@ -33,13 +35,13 @@ type Message struct {
 	msg *gomail.Message
 }
 
-// MockMessage for testing 
-type MockMessage struct {}
+// MockMessage for testing
+type MockMessage struct{}
 
 // For the email template
 type email struct {
-    ID string
-    Name string
+	ID   string
+	Name string
 }
 
 // EmailConfig represents configuration for email.
@@ -65,7 +67,7 @@ type UserProfile struct {
 // NewUserController creates a user controller.
 func NewUserController(service *goa.Service, emailCollection CollectionEmail) *UserController {
 	return &UserController{
-		Controller: service.NewController("UserController"),
+		Controller:      service.NewController("UserController"),
 		emailCollection: emailCollection,
 	}
 }
@@ -84,14 +86,31 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	if errJsonUser != nil {
 		return errJsonUser
 	}
-	resp, err := CreateNewUser(client, jsonUser, urlConfig.UserService)
-	if err != nil {
-		return err
+
+	output := make(chan *http.Response, 1)
+
+	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
+		resp, err := CreateNewUser(client, jsonUser, urlConfig.UserService)
+		if err != nil {
+			return err
+		}
+		output <- resp
+		return nil
+	}, nil)
+
+	var createUserResp *http.Response
+	var err error
+	select {
+	case out := <-output:
+		createUserResp = out
+	case respErr := <-errorsChan:
+		return respErr
+		// failure
 	}
 
 	// Inspect status code from response
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+	body, _ := ioutil.ReadAll(createUserResp.Body)
+	if createUserResp.StatusCode != 200 && createUserResp.StatusCode != 201 {
 		// Temporary workaround.
 		response := strings.Replace(string(body), "\"", "'", -1)
 		response = strings.Replace(response, "\\", "", -1)
@@ -177,6 +196,7 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
 	return nil
 }
+
 // Read email configuratio from config file.
 func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
 	var config EmailConfig
@@ -220,21 +240,21 @@ func UrlConfigFromFile(configFile string) (*UrlConfig, error) {
 
 // Create a template using emailTemplate.html
 func ParseTemplate(templateFileName string, data interface{}) (string, error) {
-    tmpl, err := template.ParseFiles(templateFileName)
-    if err != nil {
-        return "", err
-    }
+	tmpl, err := template.ParseFiles(templateFileName)
+	if err != nil {
+		return "", err
+	}
 
-    // Stores the parsed template
-    var buff bytes.Buffer 
+	// Stores the parsed template
+	var buff bytes.Buffer
 
-    // Send the parsed template to buff 
-    err = tmpl.Execute(&buff, data)
-    if err != nil {
-        return "", err
-    }
+	// Send the parsed template to buff
+	err = tmpl.Execute(&buff, data)
+	if err != nil {
+		return "", err
+	}
 
-    return buff.String(), nil
+	return buff.String(), nil
 }
 
 // Because http.Client does not provide PUT method
