@@ -13,7 +13,8 @@ import (
 	"net/url"
 	"strings"
 	"html/template"
-	"userRegistration-microservice/app"
+	"github.com/JormungandrK/microservice-registration/app"
+	"github.com/afex/hystrix-go/hystrix"
 )
 
 // CollectionEmail is an interface to access to the email func.

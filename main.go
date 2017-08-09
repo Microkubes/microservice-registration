@@ -1,4 +1,4 @@
-//go:generate goagen bootstrap -d userRegistration-microservice/design
+//go:generate goagen bootstrap -d microservice-registration/design
 
 package main
 
@@ -7,7 +7,7 @@ import (
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
-	"userRegistration-microservice/app"
+	"github.com/JormungandrK/microservice-registration/app"
 )
 
 func main() {
@@ -31,5 +31,6 @@ func main() {
 	if err := service.ListenAndServe(":8081"); err != nil {
 		service.LogError("startup", "err", err)
 	}
+
 
 }

@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=userRegistration-microservice/design
-// --out=$(GOPATH)/src/userRegistration-microservice
+// --design=github.com/JormungandrK/microservice-registration/design
+// --out=$(GOPATH)src/github.com/JormungandrK/microservice-registration
 // --version=v1.2.0-dirty
 
 package app
@@ -44,46 +44,46 @@ func (ut *userPayload) Finalize() {
 // Validate validates the userPayload type instance.
 func (ut *userPayload) Validate() (err error) {
 	if ut.Fullname == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "fullname"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "fullname"))
 	}
 	if ut.Username == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "username"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "username"))
 	}
 	if ut.Email == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "email"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "email"))
 	}
 	if ut.Password == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "password"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "password"))
 	}
 	if ut.Roles == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "roles"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "roles"))
 	}
 	if ut.ExternalID == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "externalId"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "externalId"))
 	}
 	if ut.Email != nil {
 		if err2 := goa.ValidateFormat(goa.FormatEmail, *ut.Email); err2 != nil {
-			err = goa.MergeErrors(err, goa.InvalidFormatError(`response.email`, *ut.Email, goa.FormatEmail, err2))
+			err = goa.MergeErrors(err, goa.InvalidFormatError(`request.email`, *ut.Email, goa.FormatEmail, err2))
 		}
 	}
 	if ut.Fullname != nil {
 		if ok := goa.ValidatePattern(`^([a-zA-Z0-9]{4,30})$`, *ut.Fullname); !ok {
-			err = goa.MergeErrors(err, goa.InvalidPatternError(`response.fullname`, *ut.Fullname, `^([a-zA-Z0-9]{4,30})$`))
+			err = goa.MergeErrors(err, goa.InvalidPatternError(`request.fullname`, *ut.Fullname, `^([a-zA-Z0-9]{4,30})$`))
 		}
 	}
 	if ut.Password != nil {
 		if utf8.RuneCountInString(*ut.Password) < 6 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError(`response.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 6, true))
+			err = goa.MergeErrors(err, goa.InvalidLengthError(`request.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 6, true))
 		}
 	}
 	if ut.Password != nil {
 		if utf8.RuneCountInString(*ut.Password) > 30 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError(`response.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 30, false))
+			err = goa.MergeErrors(err, goa.InvalidLengthError(`request.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 30, false))
 		}
 	}
 	if ut.Username != nil {
 		if ok := goa.ValidatePattern(`^([a-zA-Z0-9@]{4,30})$`, *ut.Username); !ok {
-			err = goa.MergeErrors(err, goa.InvalidPatternError(`response.username`, *ut.Username, `^([a-zA-Z0-9@]{4,30})$`))
+			err = goa.MergeErrors(err, goa.InvalidPatternError(`request.username`, *ut.Username, `^([a-zA-Z0-9@]{4,30})$`))
 		}
 	}
 	return
@@ -137,37 +137,37 @@ type UserPayload struct {
 // Validate validates the UserPayload type instance.
 func (ut *UserPayload) Validate() (err error) {
 	if ut.Fullname == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "fullname"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "fullname"))
 	}
 	if ut.Username == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "username"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "username"))
 	}
 	if ut.Email == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "email"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "email"))
 	}
 	if ut.Password == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "password"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "password"))
 	}
 	if ut.Roles == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "roles"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "roles"))
 	}
 	if ut.ExternalID == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "externalId"))
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "externalId"))
 	}
 	if err2 := goa.ValidateFormat(goa.FormatEmail, ut.Email); err2 != nil {
-		err = goa.MergeErrors(err, goa.InvalidFormatError(`response.email`, ut.Email, goa.FormatEmail, err2))
+		err = goa.MergeErrors(err, goa.InvalidFormatError(`type.email`, ut.Email, goa.FormatEmail, err2))
 	}
 	if ok := goa.ValidatePattern(`^([a-zA-Z0-9]{4,30})$`, ut.Fullname); !ok {
-		err = goa.MergeErrors(err, goa.InvalidPatternError(`response.fullname`, ut.Fullname, `^([a-zA-Z0-9]{4,30})$`))
+		err = goa.MergeErrors(err, goa.InvalidPatternError(`type.fullname`, ut.Fullname, `^([a-zA-Z0-9]{4,30})$`))
 	}
 	if utf8.RuneCountInString(ut.Password) < 6 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`response.password`, ut.Password, utf8.RuneCountInString(ut.Password), 6, true))
+		err = goa.MergeErrors(err, goa.InvalidLengthError(`type.password`, ut.Password, utf8.RuneCountInString(ut.Password), 6, true))
 	}
 	if utf8.RuneCountInString(ut.Password) > 30 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`response.password`, ut.Password, utf8.RuneCountInString(ut.Password), 30, false))
+		err = goa.MergeErrors(err, goa.InvalidLengthError(`type.password`, ut.Password, utf8.RuneCountInString(ut.Password), 30, false))
 	}
 	if ok := goa.ValidatePattern(`^([a-zA-Z0-9@]{4,30})$`, ut.Username); !ok {
-		err = goa.MergeErrors(err, goa.InvalidPatternError(`response.username`, ut.Username, `^([a-zA-Z0-9@]{4,30})$`))
+		err = goa.MergeErrors(err, goa.InvalidPatternError(`type.username`, ut.Username, `^([a-zA-Z0-9@]{4,30})$`))
 	}
 	return
 }

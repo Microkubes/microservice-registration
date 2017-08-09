@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/goadesign/goa"
-	"userRegistration-microservice/app"
-	"userRegistration-microservice/app/test"
+	"github.com/JormungandrK/microservice-registration/app"
+	"github.com/JormungandrK/microservice-registration/app/test"
 )
 
 var (

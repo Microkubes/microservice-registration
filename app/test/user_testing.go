@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=userRegistration-microservice/design
-// --out=$(GOPATH)/src/userRegistration-microservice
+// --design=github.com/JormungandrK/microservice-registration/design
+// --out=$(GOPATH)src/github.com/JormungandrK/microservice-registration
 // --version=v1.2.0-dirty
 
 package test
@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/goatest"
 	"io"
@@ -21,7 +22,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"userRegistration-microservice/app"
 )
 
 // RegisterUserBadRequest runs the method Register of the given controller with the given parameters and payload.
