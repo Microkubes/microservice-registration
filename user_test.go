@@ -97,3 +97,18 @@ func TestRegisterUserBadRequest(t *testing.T) {
 
 	test.RegisterUserBadRequest(t, context.Background(), service, ctrl, user)
 }
+
+// func (mail *Message) SendEmail(id string, username string, email string, template string) error
+func TestSendEmail(t *testing.T) {
+	return nil
+}
+
+// func EmailConfigFromFile(configFile string) (*EmailConfig, error)
+func TestEmailConfigFromFile(t *testing.T) {
+	return nil
+}
+
+// func UrlConfigFromFile(configFile string) (*UrlConfig, error)
+func TestUrlConfigFromFile(t *testing.T) {
+	return nil
+}
