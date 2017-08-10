@@ -131,14 +131,31 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	if errMarshalUserProfile != nil {
 		return errMarshalUserProfile
 	}
-	resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, urlConfig.UserProfileService)
-	if errUserProfile != nil {
-		return errUserProfile
+
+	upOutput := make(chan *http.Response, 1)
+
+	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
+		resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, urlConfig.UserProfileService)
+		if errUserProfile != nil {
+			return errUserProfile
+		}
+		upOutput <- resp
+		return nil
+	}, nil)
+	
+	var createUpResp *http.Response
+	// var upErr upError
+	select {
+		case out := <- upOutput:
+			createUpResp = out
+		case respErr := <- upErrorChan:
+			return respErr
 	}
 
+
 	// Inspect status code from response
-	bodyUserProfile, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 && resp.StatusCode != 204 {
+	bodyUserProfile, _ := ioutil.ReadAll(createUpResp.Body)
+	if createUpResp.StatusCode != 200 && createUpResp.StatusCode != 204 {
 		// Temporary workaround.
 		response := strings.Replace(string(bodyUserProfile), "\"", "'", -1)
 		response = strings.Replace(response, "\\", "", -1)
