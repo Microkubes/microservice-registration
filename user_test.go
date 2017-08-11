@@ -131,28 +131,6 @@ func TestUrlConfigFromFile(t *testing.T) {
 	}
 }
 
-func TestSendEmail(t *testing.T) {
-	type email struct {
-		ID   string
-		Name string
-	}
-
-	id := "20"
-	username := "testusername"
-	userEmail := email{id, username}
-	template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
-	
-	if errTemp != nil {
-		t.Fatal()
-	}
-
-	_, err := SendEmail(id, username, userEmail, template)
-
-	if err != nil {
-		t.Fail()
-	}
-}
-
 
 // Returns whether the given file or directory exists or not
 func exists(path string) (bool, error) {
