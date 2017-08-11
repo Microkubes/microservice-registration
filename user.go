@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"os"
 
 	gomail "gopkg.in/gomail.v2"
 
@@ -76,7 +77,16 @@ func NewUserController(service *goa.Service, emailCollection CollectionEmail) *U
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
-	urlConfig, errUrl := UrlConfigFromFile("./urlConfig.json")
+
+	var conf string
+
+	if len(strings.TrimSpace(os.Getenv("URL_CONFIG_JSON"))) == 0 {
+		conf = "./urlConfig.json"
+	}else{
+		conf = os.Getenv("URL_CONFIG_JSON")
+	}
+
+	urlConfig, errUrl := UrlConfigFromFile(conf)
 	if errUrl != nil {
 		return errUrl
 	}
@@ -194,7 +204,14 @@ func UpdateUserProfile(client *http.Client, payload []byte, id string, url strin
 
 // Send email for verification.
 func (mail *Message) SendEmail(id string, username string, email string, template string) error {
-	emailConfig, _ := EmailConfigFromFile("./emailConfig.json")
+	var emailConf string
+
+	if len(strings.TrimSpace(os.Getenv("URL_EMAIL_CONFIG_JSON"))) == 0 {
+		emailConf = "./emailConfig.json"
+	}else{
+		emailConf = os.Getenv("URL_EMAIL_CONFIG_JSON")
+	}
+	emailConfig, _ := EmailConfigFromFile(emailConf)
 
 	mail.msg.SetHeader("From", emailConfig.User)
 	mail.msg.SetHeader("To", email)
@@ -287,3 +304,4 @@ func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response
 
 	return resp, nil
 }
+
