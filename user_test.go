@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/h2non/gock.v1"
 	"testing"
+	"os"
 
 	"github.com/goadesign/goa"
 	"github.com/JormungandrK/microservice-registration/app"
@@ -98,17 +99,65 @@ func TestRegisterUserBadRequest(t *testing.T) {
 	test.RegisterUserBadRequest(t, context.Background(), service, ctrl, user)
 }
 
-// func (mail *Message) SendEmail(id string, username string, email string, template string) error
-func TestSendEmail(t *testing.T) {
-	return nil
-}
-
-// func EmailConfigFromFile(configFile string) (*EmailConfig, error)
 func TestEmailConfigFromFile(t *testing.T) {
-	return nil
+	file := "./emailConfig.json"
+	b, err := exists(file)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	if b ==true {
+		_, err := EmailConfigFromFile(file)
+		if err != nil {
+			t.Fail()
+		}
+	}
 }
 
-// func UrlConfigFromFile(configFile string) (*UrlConfig, error)
 func TestUrlConfigFromFile(t *testing.T) {
-	return nil
+	file := "./urlConfig.json"
+	b, err := exists(file)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	if b ==true {
+		_, err := UrlConfigFromFile(file)
+		if err != nil {
+			t.Fail()
+		}
+	}
+}
+
+func TestSendEmail(t *testing.T) {
+	type email struct {
+		ID   string
+		Name string
+	}
+
+	id := "20"
+	username := "testusername"
+	userEmail := email{id, username}
+	template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
+	
+	if errTemp != nil {
+		t.Fatal()
+	}
+
+	_, err := SendEmail(id, username, userEmail, template)
+
+	if err != nil {
+		t.Fail()
+	}
+}
+
+
+// Returns whether the given file or directory exists or not
+func exists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil { return true, nil }
+    if os.IsNotExist(err) { return false, nil }
+    return true, err
 }
