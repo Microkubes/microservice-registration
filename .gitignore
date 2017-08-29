@@ -13,3 +13,9 @@
 .glide/
 
 microservice-registration
+
+# SSH Keys directory
+keys
+ssh-keys
+.keys
+.ssh-keys
