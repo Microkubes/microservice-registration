@@ -10,10 +10,8 @@ RUN chmod 700 /root/.ssh/id_rsa && \
 
 RUN go get -u github.com/goadesign/goa/... && \
 	go get -u github.com/afex/hystrix-go/hystrix && \
-	go get -u gopkg.in/gomail.v2
-
-RUN go get -u github.com/JormungandrK/microservice-tools && \
-	go get -u github.com/JormungandrK/microservice-security
+	go get -u gopkg.in/gomail.v2 && \
+	go get -u github.com/JormungandrK/microservice-tools
 
 COPY . /go/src/github.com/JormungandrK/microservice-registration
 RUN go install github.com/JormungandrK/microservice-registration
