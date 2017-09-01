@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/JormungandrK/microservice-registration/client"
+	"github.com/JormungandrK/microservice-registration/tool/cli"
 	goaclient "github.com/goadesign/goa/client"
 	"github.com/spf13/cobra"
 	"net/http"
 	"os"
 	"time"
-	"userRegistration-microservice/client"
-	"userRegistration-microservice/tool/cli"
 )
 
 func main() {

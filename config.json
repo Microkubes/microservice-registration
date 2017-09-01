@@ -1,0 +1,8 @@
+{
+  "name": "registration-microservice",
+  "port": 8081,
+  "virtual_host": "registration.services.jormugandr.org",
+  "hosts": ["localhost", "registration.services.jormugandr.org"],
+  "weight": 10,
+  "slots": 100
+}
