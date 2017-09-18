@@ -12,7 +12,7 @@ var _ = API("user", func() {
 	    Description("A service that provides user registration")
         Version("1.0")
 	    Scheme("http")
-	    Host("localhost:8081")
+	    Host("localhost:8080")
 })
 
 // Resources group related API endpoints together.
@@ -62,10 +62,11 @@ var UserPayload = Type("UserPayload", func() {
         Description("UserPayload")
 
         Attribute("fullname", String, "Full name of user", func() {
-            Pattern("^([a-zA-Z0-9]{4,30})$")
+            Pattern("^([a-zA-Z0-9 ]{4,30})$")
         })
         Attribute("username", String, "Name of user", func() {
-            Pattern("^([a-zA-Z0-9@]{4,30})$")
+            MinLength(4)
+            MaxLength(50)
         })
         Attribute("email", String, "Email of user", func() {
             Format("email")
@@ -80,7 +81,7 @@ var UserPayload = Type("UserPayload", func() {
             Default(false) 
         })
 
-        Required("fullname", "username", "email", "password", "roles", "externalId")
+        Required("fullname", "username", "email", "roles")
 })
 
 // Swagger UI

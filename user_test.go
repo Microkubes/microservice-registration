@@ -21,19 +21,21 @@ var (
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code
 func TestRegisterUserCreated(t *testing.T) {
+	pass := "password"
+	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fullname",
 		Username:   "username",
-		Password:   "password",
+		Password:   &pass,
 		Email:      "example@mail.com",
-		ExternalID: "qwerc461f9f8eb02aae053f3",
+		ExternalID: &extID,
 		Roles:      []string{"admin", "user"},
 	}
 
 	urlConfig, _ := UrlConfigFromFile("./urlConfig.json")
 
 	gock.New(urlConfig.UserService).
-		Post("/users/").
+		Post("/users").
 		Reply(201).
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
@@ -64,12 +66,14 @@ func TestRegisterUserCreated(t *testing.T) {
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code
 func TestRegisterUserBadRequest(t *testing.T) {
+	pass := "password"
+	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fu",
 		Username:   "username",
-		Password:   "password",
+		Password:   &pass,
 		Email:      "test",
-		ExternalID: "qwerc461f9f8eb02aae053f3",
+		ExternalID: &extID,
 		Roles:      []string{"admin", "user"},
 	}
 
