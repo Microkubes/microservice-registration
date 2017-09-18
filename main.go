@@ -3,14 +3,14 @@
 package main
 
 import (
+	"gopkg.in/gomail.v2"
 	"net/http"
 	"os"
-	"gopkg.in/gomail.v2"
 
+	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-tools/gateway"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
-	"github.com/JormungandrK/microservice-registration/app"
 )
 
 func main() {

@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"gopkg.in/h2non/gock.v1"
-	"testing"
 	"os"
+	"testing"
 
-	"github.com/goadesign/goa"
+	"gopkg.in/h2non/gock.v1"
+
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/app/test"
+	"github.com/goadesign/goa"
 )
 
 var (
@@ -111,7 +112,7 @@ func TestEmailConfigFromFile(t *testing.T) {
 		t.Fatal()
 	}
 
-	if b ==true {
+	if b == true {
 		_, err := EmailConfigFromFile(file)
 		if err != nil {
 			t.Fail()
@@ -127,7 +128,7 @@ func TestUrlConfigFromFile(t *testing.T) {
 		t.Fatal()
 	}
 
-	if b ==true {
+	if b == true {
 		_, err := UrlConfigFromFile(file)
 		if err != nil {
 			t.Fail()
@@ -135,11 +136,14 @@ func TestUrlConfigFromFile(t *testing.T) {
 	}
 }
 
-
 // Returns whether the given file or directory exists or not
 func exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }

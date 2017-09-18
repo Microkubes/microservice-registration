@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"os"
+	"strings"
 
 	gomail "gopkg.in/gomail.v2"
 
@@ -78,12 +78,12 @@ func NewUserController(service *goa.Service, emailCollection CollectionEmail) *U
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
-    
+
 	var conf string
 
 	if len(strings.TrimSpace(os.Getenv("URL_CONFIG_JSON"))) == 0 {
 		conf = "./urlConfig.json"
-	}else{
+	} else {
 		conf = os.Getenv("URL_CONFIG_JSON")
 	}
 
@@ -153,13 +153,13 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		upOutput <- resp
 		return nil
 	}, nil)
-	
+
 	var createUpResp *http.Response
 	select {
-		case out := <- upOutput:
-			createUpResp = out
-		case respErr := <- upErrorChan:
-			return respErr
+	case out := <-upOutput:
+		createUpResp = out
+	case respErr := <-upErrorChan:
+		return respErr
 	}
 
 	// Inspect status code from response
@@ -184,7 +184,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		// Send email for verification
 		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
 			return err
-		}		
+		}
 	}
 
 	return ctx.Created(user)
@@ -208,7 +208,7 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 
 	if len(strings.TrimSpace(os.Getenv("URL_EMAIL_CONFIG_JSON"))) == 0 {
 		emailConf = "./emailConfig.json"
-	}else{
+	} else {
 		emailConf = os.Getenv("URL_EMAIL_CONFIG_JSON")
 	}
 	emailConfig, err := EmailConfigFromFile(emailConf)
@@ -308,4 +308,3 @@ func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response
 
 	return resp, nil
 }
-
