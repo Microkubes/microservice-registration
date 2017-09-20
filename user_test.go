@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"gopkg.in/h2non/gock.v1"
-	"testing"
 	"os"
+	"testing"
 
-	"github.com/goadesign/goa"
+	"gopkg.in/h2non/gock.v1"
+
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/app/test"
+	"github.com/goadesign/goa"
 )
 
 var (
@@ -21,19 +22,21 @@ var (
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code
 func TestRegisterUserCreated(t *testing.T) {
+	pass := "password"
+	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fullname",
 		Username:   "username",
-		Password:   "password",
+		Password:   &pass,
 		Email:      "example@mail.com",
-		ExternalID: "qwerc461f9f8eb02aae053f3",
+		ExternalID: &extID,
 		Roles:      []string{"admin", "user"},
 	}
 
 	urlConfig, _ := UrlConfigFromFile("./urlConfig.json")
 
 	gock.New(urlConfig.UserService).
-		Post("/users/").
+		Post("/users").
 		Reply(201).
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
@@ -64,12 +67,14 @@ func TestRegisterUserCreated(t *testing.T) {
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code
 func TestRegisterUserBadRequest(t *testing.T) {
+	pass := "password"
+	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fu",
 		Username:   "username",
-		Password:   "password",
+		Password:   &pass,
 		Email:      "test",
-		ExternalID: "qwerc461f9f8eb02aae053f3",
+		ExternalID: &extID,
 		Roles:      []string{"admin", "user"},
 	}
 
@@ -107,7 +112,7 @@ func TestEmailConfigFromFile(t *testing.T) {
 		t.Fatal()
 	}
 
-	if b ==true {
+	if b == true {
 		_, err := EmailConfigFromFile(file)
 		if err != nil {
 			t.Fail()
@@ -123,7 +128,7 @@ func TestUrlConfigFromFile(t *testing.T) {
 		t.Fatal()
 	}
 
-	if b ==true {
+	if b == true {
 		_, err := UrlConfigFromFile(file)
 		if err != nil {
 			t.Fail()
@@ -131,11 +136,14 @@ func TestUrlConfigFromFile(t *testing.T) {
 	}
 }
 
-
 // Returns whether the given file or directory exists or not
 func exists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }

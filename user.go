@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"os"
+	"strings"
 
 	gomail "gopkg.in/gomail.v2"
 
@@ -73,7 +73,8 @@ func NewUserController(service *goa.Service, emailCollection CollectionEmail) *U
 	}
 }
 
-// Register runs the register action.
+// Register runs the register action. It creates a user and user profile.
+// Also, it sends an email to the user if user does not come from external services.
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
@@ -82,7 +83,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 	if len(strings.TrimSpace(os.Getenv("URL_CONFIG_JSON"))) == 0 {
 		conf = "./urlConfig.json"
-	}else{
+	} else {
 		conf = os.Getenv("URL_CONFIG_JSON")
 	}
 
@@ -126,7 +127,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		response = strings.Replace(response, "\\", "", -1)
 
 		err = errors.New(response)
-		return ctx.BadRequest(goa.ErrBadRequest(err))
+		return err
 	}
 
 	if err = json.Unmarshal(body, &user); err != nil {
@@ -152,16 +153,14 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		upOutput <- resp
 		return nil
 	}, nil)
-	
-	var createUpResp *http.Response
-	// var upErr upError
-	select {
-		case out := <- upOutput:
-			createUpResp = out
-		case respErr := <- upErrorChan:
-			return respErr
-	}
 
+	var createUpResp *http.Response
+	select {
+	case out := <-upOutput:
+		createUpResp = out
+	case respErr := <-upErrorChan:
+		return respErr
+	}
 
 	// Inspect status code from response
 	bodyUserProfile, _ := ioutil.ReadAll(createUpResp.Body)
@@ -174,17 +173,18 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		return ctx.BadRequest(goa.ErrBadRequest(err))
 	}
 
-	// Create the variables for the template
-	userEmail := email{user.ID, user.Fullname}
+	if ctx.Payload.ExternalID == nil {
+		userEmail := email{user.ID, user.Fullname}
 
-	template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
-	if errTemp != nil {
-		return errTemp
-	}
+		template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
+		if errTemp != nil {
+			return errTemp
+		}
 
-	// Send email for verification
-	if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
-		return err
+		// Send email for verification
+		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
+			return err
+		}
 	}
 
 	return ctx.Created(user)
@@ -192,7 +192,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 // Create new user.
 func CreateNewUser(client *http.Client, payload []byte, url string) (*http.Response, error) {
-	resp, err := client.Post(fmt.Sprintf("%s/users/", url), "application/json", bytes.NewBuffer(payload))
+	resp, err := client.Post(fmt.Sprintf("%s/users", url), "application/json", bytes.NewBuffer(payload))
 	return resp, err
 }
 
@@ -208,10 +208,14 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 
 	if len(strings.TrimSpace(os.Getenv("URL_EMAIL_CONFIG_JSON"))) == 0 {
 		emailConf = "./emailConfig.json"
-	}else{
+	} else {
 		emailConf = os.Getenv("URL_EMAIL_CONFIG_JSON")
 	}
-	emailConfig, _ := EmailConfigFromFile(emailConf)
+	emailConfig, err := EmailConfigFromFile(emailConf)
+
+	if err != nil {
+		return err
+	}
 
 	mail.msg.SetHeader("From", emailConfig.User)
 	mail.msg.SetHeader("To", email)
@@ -304,4 +308,3 @@ func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response
 
 	return resp, nil
 }
-
