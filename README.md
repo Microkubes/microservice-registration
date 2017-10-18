@@ -1,6 +1,10 @@
 User Registration Microservice
 ==============================
 
+[![Build](https://travis-ci.com/JormungandrK/microservice-registration.svg?token=UB5yzsLHNSbtjSYrGbWf&branch=master)](https://travis-ci.com/JormungandrK/microservice-registration)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/a30f92c1b70b692e6484/test_coverage)](https://codeclimate.com/repos/59e7705a9c7963028d001870/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/a30f92c1b70b692e6484/maintainability)](https://codeclimate.com/repos/59e7705a9c7963028d001870/maintainability)
+
 ## Prerequisite
 Create a project directory. Set GOPATH enviroment variable to that project. Add $GOPATH/bin to the $PATH
 ```
@@ -176,4 +180,3 @@ Configuration properties:
  * **hosts** - list of valid hosts. Used for proxying and load balancing of the incoming request. You need to have at least the **virtual_host** in the list.
  * **weight** - instance weight - user for load balancing.
  * **slots** - maximal number of service instances under ```"registration.services.jormugandr.org"```.
-
