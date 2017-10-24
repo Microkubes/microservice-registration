@@ -53,13 +53,13 @@ type EmailConfig struct {
 	Password string `json:"password,omitempty"`
 }
 
-// Represents urls from the external services
-type UrlConfig struct {
+// URLConfig represents urls from the external services
+type URLConfig struct {
 	UserService        string `json:"userService,omitempty"`
 	UserProfileService string `json:"userProfileService,omitempty"`
 }
 
-// Represents User Profle
+// UserProfile represents User Profle
 type UserProfile struct {
 	Fullname string
 	Email    string
@@ -87,15 +87,15 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		conf = os.Getenv("URL_CONFIG_JSON")
 	}
 
-	urlConfig, errUrl := UrlConfigFromFile(conf)
-	if errUrl != nil {
-		return errUrl
+	urlConfig, errURL := URLConfigFromFile(conf)
+	if errURL != nil {
+		return errURL
 	}
 
 	// Create new user from payload
-	jsonUser, errJsonUser := json.Marshal(ctx.Payload)
-	if errJsonUser != nil {
-		return errJsonUser
+	jsonUser, errJSONUser := json.Marshal(ctx.Payload)
+	if errJSONUser != nil {
+		return errJSONUser
 	}
 
 	output := make(chan *http.Response, 1)
@@ -190,19 +190,19 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	return ctx.Created(user)
 }
 
-// Create new user.
+// CreateNewUser creates a new user.
 func CreateNewUser(client *http.Client, payload []byte, url string) (*http.Response, error) {
 	resp, err := client.Post(fmt.Sprintf("%s/users", url), "application/json", bytes.NewBuffer(payload))
 	return resp, err
 }
 
-// Update user profile.
+// UpdateUserProfile updates user profile.
 func UpdateUserProfile(client *http.Client, payload []byte, id string, url string) (*http.Response, error) {
 	resp, err := PutRequest(fmt.Sprintf("%s/users/%s/profile", url, id), bytes.NewBuffer(payload), client)
 	return resp, err
 }
 
-// Send email for verification.
+// SendEmail sends an email for verification.
 func (mail *Message) SendEmail(id string, username string, email string, template string) error {
 	var emailConf string
 
@@ -230,12 +230,12 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 	return nil
 }
 
-// Mock send email for verification.
+// SendEmail mock sends email for verification.
 func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
 	return nil
 }
 
-// Read email configuratio from config file.
+// EmailConfigFromFile reads email configuration from config file.
 func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
 	var config EmailConfig
 	cnf, err := ioutil.ReadFile(configFile)
@@ -250,9 +250,9 @@ func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
 	return &config, nil
 }
 
-// Read url configuratio from config file.
-func UrlConfigFromFile(configFile string) (*UrlConfig, error) {
-	var config UrlConfig
+// URLConfigFromFile reads url configuration from config file.
+func URLConfigFromFile(configFile string) (*URLConfig, error) {
+	var config URLConfig
 	cnf, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -264,19 +264,19 @@ func UrlConfigFromFile(configFile string) (*UrlConfig, error) {
 
 	// Validate urls
 	c := &config
-	_, errUrlUser := url.ParseRequestURI(string(c.UserService))
-	if errUrlUser != nil {
-		return nil, errUrlUser
+	_, errURLUser := url.ParseRequestURI(string(c.UserService))
+	if errURLUser != nil {
+		return nil, errURLUser
 	}
-	_, errUrlUserProfile := url.ParseRequestURI(string(c.UserService))
-	if errUrlUserProfile != nil {
-		return nil, errUrlUserProfile
+	_, errURLUserProfile := url.ParseRequestURI(string(c.UserService))
+	if errURLUserProfile != nil {
+		return nil, errURLUserProfile
 	}
 
 	return &config, nil
 }
 
-// Create a template using emailTemplate.html
+// ParseTemplate creates a template using emailTemplate.html
 func ParseTemplate(templateFileName string, data interface{}) (string, error) {
 	tmpl, err := template.ParseFiles(templateFileName)
 	if err != nil {
@@ -295,7 +295,7 @@ func ParseTemplate(templateFileName string, data interface{}) (string, error) {
 	return buff.String(), nil
 }
 
-// Because http.Client does not provide PUT method
+// PutRequest Because http.Client does not provide PUT method
 func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPut, url, data)
 	if err != nil {

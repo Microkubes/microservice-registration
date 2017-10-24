@@ -33,7 +33,7 @@ func TestRegisterUserCreated(t *testing.T) {
 		Roles:      []string{"admin", "user"},
 	}
 
-	urlConfig, _ := UrlConfigFromFile("./urlConfig.json")
+	urlConfig, _ := URLConfigFromFile("./urlConfig.json")
 
 	gock.New(urlConfig.UserService).
 		Post("/users").
@@ -78,7 +78,7 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		Roles:      []string{"admin", "user"},
 	}
 
-	urlConfig, _ := UrlConfigFromFile("./urlConfig.json")
+	urlConfig, _ := URLConfigFromFile("./urlConfig.json")
 
 	gock.New(urlConfig.UserService).
 		Post("/users/").
@@ -129,7 +129,7 @@ func TestUrlConfigFromFile(t *testing.T) {
 	}
 
 	if b == true {
-		_, err := UrlConfigFromFile(file)
+		_, err := URLConfigFromFile(file)
 		if err != nil {
 			t.Fail()
 		}
