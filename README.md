@@ -98,7 +98,7 @@ make build
 
 To run the registration microservice you'll need to set up some ENV variables:
 
- * **SERVICE_CONFIG_FILE** - Location of the configuration JSON file (default: config.json)
+ * **SERVICE_CONFIG_FILE** - Location of the configuration JSON file
  * **API_GATEWAY_URL** - Kong API url (default: http://localhost:8001)
 
 Run the docker image:
@@ -158,14 +158,14 @@ You should see output (log) in the container running the service.
 
 # Service configuration
 
-The service loads the gateway configuration from a JSON file (See **SERVICE_CONFIG_FILE**
-ENV variable).
+The service loads the gateway configuration from a JSON file /run/secrets/microservice_registration_config.json. To change the path set the
+**SERVICE_CONFIG_FILE** env var.
 Here's an example of a JSON configuration file:
 
 ```json
 {
   "name": "registration-microservice",
-  "port": 8081,
+  "port": 8080,
   "virtual_host": "registration.services.jormugandr.org",
   "hosts": ["localhost", "registration.services.jormugandr.org"],
   "weight": 10,
@@ -175,7 +175,7 @@ Here's an example of a JSON configuration file:
 
 Configuration properties:
  * **name** - ```"registration-microservice"``` - the name of the service, do not change this.
- * **port** - ```8081``` - port on which the microservice is running.
+ * **port** - ```8080``` - port on which the microservice is running.
  * **virtual_host** - ```"registration.services.jormugandr.org"``` domain name of the service group/cluster. Don't change if not sure.
  * **hosts** - list of valid hosts. Used for proxying and load balancing of the incoming request. You need to have at least the **virtual_host** in the list.
  * **weight** - instance weight - user for load balancing.
