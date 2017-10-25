@@ -21,7 +21,7 @@ import (
 // RegisterUserPath computes a request path to the register action of user.
 func RegisterUserPath() string {
 
-	return fmt.Sprintf("/register")
+	return fmt.Sprintf("/users/register")
 }
 
 // Creates user

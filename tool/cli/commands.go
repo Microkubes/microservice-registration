@@ -51,7 +51,7 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 	}
 	tmp1 := new(RegisterUserCommand)
 	sub = &cobra.Command{
-		Use:   `user ["/register"]`,
+		Use:   `user ["/users/register"]`,
 		Short: ``,
 		Long: `
 
@@ -293,7 +293,7 @@ func (cmd *RegisterUserCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/register"
+		path = "/users/register"
 	}
 	var payload client.UserPayload
 	if cmd.Payload != "" {

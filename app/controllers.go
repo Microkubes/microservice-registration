@@ -84,8 +84,8 @@ func MountUserController(service *goa.Service, ctrl UserController) {
 		}
 		return ctrl.Register(rctx)
 	}
-	service.Mux.Handle("POST", "/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
-	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /register")
+	service.Mux.Handle("POST", "/users/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
+	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /users/register")
 }
 
 // unmarshalRegisterUserPayload unmarshals the request body into the context request data Payload field.

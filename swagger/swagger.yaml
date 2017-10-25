@@ -168,34 +168,6 @@ info:
   title: The user registration microservice
   version: "1.0"
 paths:
-  /register:
-    post:
-      description: Creates user
-      operationId: user#register
-      parameters:
-      - description: UserPayload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/UserPayload'
-      produces:
-      - application/vnd.goa.error
-      - application/vnd.goa.user+json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/users'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
-      schemes:
-      - http
-      summary: register user
-      tags:
-      - user
   /swagger-ui/{filepath}:
     get:
       operationId: swagger#/swagger-ui/*filepath
@@ -228,6 +200,34 @@ paths:
       schemes:
       - http
       summary: Download swagger/swagger.json
+  /users/register:
+    post:
+      description: Creates user
+      operationId: user#register
+      parameters:
+      - description: UserPayload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/UserPayload'
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.goa.user+json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/users'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: register user
+      tags:
+      - user
 produces:
 - application/json
 - application/xml
