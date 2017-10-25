@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package client
 
@@ -21,7 +21,7 @@ import (
 // RegisterUserPath computes a request path to the register action of user.
 func RegisterUserPath() string {
 
-	return fmt.Sprintf("/users/register")
+	return fmt.Sprintf("/register")
 }
 
 // Creates user

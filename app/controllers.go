@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package app
 
@@ -84,8 +84,8 @@ func MountUserController(service *goa.Service, ctrl UserController) {
 		}
 		return ctrl.Register(rctx)
 	}
-	service.Mux.Handle("POST", "/users/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
-	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /users/register")
+	service.Mux.Handle("POST", "/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
+	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /register")
 }
 
 // unmarshalRegisterUserPayload unmarshals the request body into the context request data Payload field.

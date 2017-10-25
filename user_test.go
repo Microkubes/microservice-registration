@@ -49,7 +49,7 @@ func TestRegisterUserCreated(t *testing.T) {
 		})
 
 	gock.New(urlConfig.UserProfileService).
-		Put(fmt.Sprintf("/users/%s/profile", "59804b3c0000000000000000")).
+		Put(fmt.Sprintf("/profiles/%s", "59804b3c0000000000000000")).
 		Reply(204).
 		JSON(map[string]interface{}{
 			"fullname": user.Fullname,
@@ -94,7 +94,7 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		})
 
 	gock.New(urlConfig.UserProfileService).
-		Put(fmt.Sprintf("/users/%s/profile", "59804b3c0000000000000000")).
+		Put(fmt.Sprintf("/profiles/%s", "59804b3c0000000000000000")).
 		Reply(400).
 		JSON(map[string]interface{}{
 			"fullname": user.Fullname,

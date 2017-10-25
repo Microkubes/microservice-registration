@@ -17,7 +17,7 @@ var _ = API("user", func() {
 
 // Resources group related API endpoints together.
 var _ = Resource("user", func() {
-	BasePath("/users")
+	BasePath("")
 	DefaultMedia(UserMedia)
 
 	// Actions define a single API endpoint

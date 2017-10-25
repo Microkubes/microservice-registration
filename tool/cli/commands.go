@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package cli
 
@@ -51,7 +51,7 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 	}
 	tmp1 := new(RegisterUserCommand)
 	sub = &cobra.Command{
-		Use:   `user ["/users/register"]`,
+		Use:   `user ["/register"]`,
 		Short: ``,
 		Long: `
 
@@ -293,7 +293,7 @@ func (cmd *RegisterUserCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/users/register"
+		path = "/register"
 	}
 	var payload client.UserPayload
 	if cmd.Payload != "" {

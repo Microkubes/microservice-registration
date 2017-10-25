@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package test
 
@@ -59,7 +59,7 @@ func RegisterUserBadRequest(t goatest.TInterface, ctx context.Context, service *
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register"),
+		Path: fmt.Sprintf("/register"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -135,7 +135,7 @@ func RegisterUserCreated(t goatest.TInterface, ctx context.Context, service *goa
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register"),
+		Path: fmt.Sprintf("/register"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
