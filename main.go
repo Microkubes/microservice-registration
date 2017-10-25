@@ -14,12 +14,16 @@ import (
 )
 
 func main() {
-	// Gateway self-registration
-	unregisterService := registerMicroservice()
-	defer unregisterService() // defer the unregister for after main exits
-
 	// Create service
 	service := goa.New("user")
+
+	// Gateway self-registration
+	unregisterService, err := registerMicroservice()
+	if err != nil {
+		service.LogError("config", "err", err)
+		return
+	}
+	defer unregisterService() // defer the unregister for after main exits
 
 	// Mount middleware
 	service.Use(middleware.RequestID())
@@ -48,17 +52,17 @@ func loadGatewaySettings() (string, string) {
 		gatewayURL = "http://localhost:8001"
 	}
 	if serviceConfigFile == "" {
-		serviceConfigFile = "config.json"
+		serviceConfigFile = "/run/secrets/microservice_registration_config.json"
 	}
 
 	return gatewayURL, serviceConfigFile
 }
 
-func registerMicroservice() func() {
+func registerMicroservice() (func(), error) {
 	gatewayURL, configFile := loadGatewaySettings()
 	registration, err := gateway.NewKongGatewayFromConfigFile(gatewayURL, &http.Client{}, configFile)
 	if err != nil {
-		panic(err)
+		return func() {}, err
 	}
 	err = registration.SelfRegister()
 	if err != nil {
@@ -67,5 +71,5 @@ func registerMicroservice() func() {
 
 	return func() {
 		registration.Unregister()
-	}
+	}, nil
 }
