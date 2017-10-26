@@ -21,6 +21,7 @@ RUN go install github.com/JormungandrK/microservice-registration
 FROM alpine:3.6
 
 COPY --from=build /go/bin/microservice-registration /usr/local/bin/microservice-registration
+COPY emailTemplate.html /emailTemplate.html
 EXPOSE 8080
 
 ENV API_GATEWAY_URL="http://localhost:8001"

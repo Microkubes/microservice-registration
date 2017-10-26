@@ -9,26 +9,27 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
+	"strconv"
 	"strings"
 
 	gomail "gopkg.in/gomail.v2"
 
 	"github.com/JormungandrK/microservice-registration/app"
+	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/goadesign/goa"
 )
 
 // CollectionEmail is an interface to access to the email func.
 type CollectionEmail interface {
-	SendEmail(id string, username string, email string, template string) error
+	SendEmail(id string, username string, email string, template string, cfg *config.Config) error
 }
 
 // UserController implements the user resource.
 type UserController struct {
 	*goa.Controller
 	emailCollection CollectionEmail
+	Config          *config.Config
 }
 
 // Message wraps a gomail.Message to embed methods in models.
@@ -45,20 +46,6 @@ type email struct {
 	Name string
 }
 
-// EmailConfig represents configuration for email.
-type EmailConfig struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
-// URLConfig represents urls from the external services
-type URLConfig struct {
-	UserService        string `json:"userService,omitempty"`
-	UserProfileService string `json:"userProfileService,omitempty"`
-}
-
 // UserProfile represents User Profle
 type UserProfile struct {
 	Fullname string
@@ -66,10 +53,11 @@ type UserProfile struct {
 }
 
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service, emailCollection CollectionEmail) *UserController {
+func NewUserController(service *goa.Service, emailCollection CollectionEmail, config *config.Config) *UserController {
 	return &UserController{
 		Controller:      service.NewController("UserController"),
 		emailCollection: emailCollection,
+		Config:          config,
 	}
 }
 
@@ -79,19 +67,6 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
 
-	var conf string
-
-	if len(strings.TrimSpace(os.Getenv("URL_CONFIG_JSON"))) == 0 {
-		conf = "./urlConfig.json"
-	} else {
-		conf = os.Getenv("URL_CONFIG_JSON")
-	}
-
-	urlConfig, errURL := URLConfigFromFile(conf)
-	if errURL != nil {
-		return errURL
-	}
-
 	// Create new user from payload
 	jsonUser, errJSONUser := json.Marshal(ctx.Payload)
 	if errJSONUser != nil {
@@ -99,9 +74,8 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	output := make(chan *http.Response, 1)
-
 	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
-		resp, err := CreateNewUser(client, jsonUser, urlConfig.UserService)
+		resp, err := CreateNewUser(client, jsonUser, c.Config.Services["user-microservice"])
 		if err != nil {
 			return err
 		}
@@ -116,7 +90,6 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		createUserResp = out
 	case respErr := <-errorsChan:
 		return respErr
-		// failure
 	}
 
 	// Inspect status code from response
@@ -146,7 +119,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	upOutput := make(chan *http.Response, 1)
 
 	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
-		resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, urlConfig.UserProfileService)
+		resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, c.Config.Services["microservice-user-profile"])
 		if errUserProfile != nil {
 			return errUserProfile
 		}
@@ -182,7 +155,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		}
 
 		// Send email for verification
-		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
+		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template, c.Config); err != nil {
 			return err
 		}
 	}
@@ -203,26 +176,17 @@ func UpdateUserProfile(client *http.Client, payload []byte, id string, url strin
 }
 
 // SendEmail sends an email for verification.
-func (mail *Message) SendEmail(id string, username string, email string, template string) error {
-	var emailConf string
-
-	if len(strings.TrimSpace(os.Getenv("URL_EMAIL_CONFIG_JSON"))) == 0 {
-		emailConf = "./emailConfig.json"
-	} else {
-		emailConf = os.Getenv("URL_EMAIL_CONFIG_JSON")
-	}
-	emailConfig, err := EmailConfigFromFile(emailConf)
-
-	if err != nil {
-		return err
-	}
-
-	mail.msg.SetHeader("From", emailConfig.User)
+func (mail *Message) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
+	mail.msg.SetHeader("From", cfg.Mail["user"])
 	mail.msg.SetHeader("To", email)
 	mail.msg.SetHeader("Subject", "Verify Your Account!")
 	mail.msg.SetBody("text/html", template)
 
-	d := gomail.NewDialer(emailConfig.Host, emailConfig.Port, emailConfig.User, emailConfig.Password)
+	port, err := strconv.Atoi(cfg.Mail["port"])
+	if err != nil {
+		return err
+	}
+	d := gomail.NewDialer(cfg.Mail["host"], port, cfg.Mail["user"], cfg.Mail["password"])
 
 	if err := d.DialAndSend(mail.msg); err != nil {
 		return err
@@ -233,47 +197,6 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 // SendEmail mock sends email for verification.
 func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
 	return nil
-}
-
-// EmailConfigFromFile reads email configuration from config file.
-func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
-	var config EmailConfig
-	cnf, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(cnf, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-// URLConfigFromFile reads url configuration from config file.
-func URLConfigFromFile(configFile string) (*URLConfig, error) {
-	var config URLConfig
-	cnf, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(cnf, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate urls
-	c := &config
-	_, errURLUser := url.ParseRequestURI(string(c.UserService))
-	if errURLUser != nil {
-		return nil, errURLUser
-	}
-	_, errURLUserProfile := url.ParseRequestURI(string(c.UserService))
-	if errURLUserProfile != nil {
-		return nil, errURLUserProfile
-	}
-
-	return &config, nil
 }
 
 // ParseTemplate creates a template using emailTemplate.html
