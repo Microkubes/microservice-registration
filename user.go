@@ -198,7 +198,7 @@ func CreateNewUser(client *http.Client, payload []byte, url string) (*http.Respo
 
 // UpdateUserProfile updates user profile.
 func UpdateUserProfile(client *http.Client, payload []byte, id string, url string) (*http.Response, error) {
-	resp, err := PutRequest(fmt.Sprintf("%s/users/%s/profile", url, id), bytes.NewBuffer(payload), client)
+	resp, err := PutRequest(fmt.Sprintf("%s/profiles/%s", url, id), bytes.NewBuffer(payload), client)
 	return resp, err
 }
 
