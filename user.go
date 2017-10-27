@@ -195,7 +195,7 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 }
 
 // SendEmail mock sends email for verification.
-func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
+func (mail *MockMessage) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
 	return nil
 }
 

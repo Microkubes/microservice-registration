@@ -2,20 +2,48 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"os"
 	"testing"
 
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/app/test"
+	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/goadesign/goa"
 )
 
+var configBytes = []byte(`
+		{
+			"microservice": {
+				"name": "registration-microservice",
+				"port": 8080,
+				"paths": ["/users/register"],
+				"virtual_host": "registration.services.jormugandr.org",
+				"weight": 10,
+				"slots": 100
+		    },
+			"gatewayUrl": "http://kong:8000",
+		  	"gatewayAdminUrl": "http://kong:8001",
+		    "services": {
+		      "user-microservice": "http://kong:8000/users",
+		      "microservice-user-profile": "http://kong:8000/profiles"
+		    },
+		    "mail": {
+				"host": "smtp.gmail.com",
+				"port": "587",
+				"user": "user_email",
+				"password": "password"
+		    }
+		}
+	`)
+var cfg = &config.Config{}
+var _ = json.Unmarshal(configBytes, cfg)
+
 var (
 	service = goa.New("user-test")
-	ctrl    = NewUserController(service, &MockMessage{})
+	ctrl    = NewUserController(service, &MockMessage{}, cfg)
 )
 
 // Call generated test helper, this checks that the returned media type is of the
@@ -33,10 +61,8 @@ func TestRegisterUserCreated(t *testing.T) {
 		Roles:      []string{"admin", "user"},
 	}
 
-	urlConfig, _ := URLConfigFromFile("./urlConfig.json")
-
-	gock.New(urlConfig.UserService).
-		Post("/users").
+	gock.New(cfg.Services["user-microservice"]).
+		Post("").
 		Reply(201).
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
@@ -48,8 +74,8 @@ func TestRegisterUserCreated(t *testing.T) {
 			"active":     false,
 		})
 
-	gock.New(urlConfig.UserProfileService).
-		Put(fmt.Sprintf("/profiles/%s", "59804b3c0000000000000000")).
+	gock.New(cfg.Services["microservice-user-profile"]).
+		Put(fmt.Sprintf("/%s", "59804b3c0000000000000000")).
 		Reply(204).
 		JSON(map[string]interface{}{
 			"fullname": user.Fullname,
@@ -78,10 +104,8 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		Roles:      []string{"admin", "user"},
 	}
 
-	urlConfig, _ := URLConfigFromFile("./urlConfig.json")
-
-	gock.New(urlConfig.UserService).
-		Post("/users/").
+	gock.New(cfg.Services["user-microservice"]).
+		Post("").
 		Reply(400).
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
@@ -93,8 +117,8 @@ func TestRegisterUserBadRequest(t *testing.T) {
 			"active":     false,
 		})
 
-	gock.New(urlConfig.UserProfileService).
-		Put(fmt.Sprintf("/profiles/%s", "59804b3c0000000000000000")).
+	gock.New(cfg.Services["microservice-user-profile"]).
+		Put(fmt.Sprintf("/%s", "59804b3c0000000000000000")).
 		Reply(400).
 		JSON(map[string]interface{}{
 			"fullname": user.Fullname,
@@ -102,48 +126,4 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		})
 
 	test.RegisterUserBadRequest(t, context.Background(), service, ctrl, user)
-}
-
-func TestEmailConfigFromFile(t *testing.T) {
-	file := "./emailConfig.json"
-	b, err := exists(file)
-
-	if err != nil {
-		t.Fatal()
-	}
-
-	if b == true {
-		_, err := EmailConfigFromFile(file)
-		if err != nil {
-			t.Fail()
-		}
-	}
-}
-
-func TestUrlConfigFromFile(t *testing.T) {
-	file := "./urlConfig.json"
-	b, err := exists(file)
-
-	if err != nil {
-		t.Fatal()
-	}
-
-	if b == true {
-		_, err := URLConfigFromFile(file)
-		if err != nil {
-			t.Fail()
-		}
-	}
-}
-
-// Returns whether the given file or directory exists or not
-func exists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return true, err
 }
