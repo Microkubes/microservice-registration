@@ -9,6 +9,7 @@
     },
 	"gatewayUrl": "http://kong:8000",
   	"gatewayAdminUrl": "http://kong:8001",
+  	"systemKey": "/run/secrets/system",
     "services": {
       "user-microservice": "http://kong:8000",
       "microservice-user-profile": "http://kong:8000"

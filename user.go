@@ -2,22 +2,26 @@ package main
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	gomail "gopkg.in/gomail.v2"
 
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/afex/hystrix-go/hystrix"
+	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"
+	uuid "github.com/satori/go.uuid"
 )
 
 // CollectionEmail is an interface to access to the email func.
@@ -75,7 +79,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 	output := make(chan *http.Response, 1)
 	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
-		resp, err := CreateNewUser(client, jsonUser, c.Config.Services["user-microservice"])
+		resp, err := makeRequest(client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
 		if err != nil {
 			return err
 		}
@@ -119,7 +123,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	upOutput := make(chan *http.Response, 1)
 
 	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
-		resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, c.Config.Services["microservice-user-profile"])
+		resp, errUserProfile := makeRequest(client, http.MethodPut, jsonUseProfile, fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], user.ID), c.Config)
 		if errUserProfile != nil {
 			return errUserProfile
 		}
@@ -161,18 +165,6 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	return ctx.Created(user)
-}
-
-// CreateNewUser creates a new user.
-func CreateNewUser(client *http.Client, payload []byte, url string) (*http.Response, error) {
-	resp, err := client.Post(fmt.Sprintf("%s/users", url), "application/json", bytes.NewBuffer(payload))
-	return resp, err
-}
-
-// UpdateUserProfile updates user profile.
-func UpdateUserProfile(client *http.Client, payload []byte, id string, url string) (*http.Response, error) {
-	resp, err := PutRequest(fmt.Sprintf("%s/profiles/%s", url, id), bytes.NewBuffer(payload), client)
-	return resp, err
 }
 
 // SendEmail sends an email for verification.
@@ -218,16 +210,56 @@ func ParseTemplate(templateFileName string, data interface{}) (string, error) {
 	return buff.String(), nil
 }
 
-// PutRequest Because http.Client does not provide PUT method
-func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPut, url, data)
+// makeRequest makes http request
+func makeRequest(client *http.Client, method string, payload []byte, url string, cfg *config.Config) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
-	resp, error := client.Do(req)
-	if error != nil {
-		return resp, error
+
+	token, err := selfSignJWT(cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	return resp, nil
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
+// selfSignJWT generates a JWT token which is self-signed with the system private key.
+// This token is used for accesing the user and user-profile microservices.
+func selfSignJWT(cfg *config.Config) (string, error) {
+	key, err := ioutil.ReadFile(cfg.SystemKey)
+	if err != nil {
+		return "", err
+	}
+
+	block, _ := pem.Decode(key)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	claims := jwtgo.MapClaims{
+		"iss":      "microservice-registration",
+		"exp":      time.Now().Add(time.Duration(30) * time.Second).Unix(),
+		"jti":      uuid.NewV4().String(),
+		"nbf":      0,
+		"sub":      "microservice-registration",
+		"scope":    "api:read",
+		"userId":   "system",
+		"username": "system",
+		"roles":    "system",
+	}
+
+	tokenRS := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, claims)
+	tokenStr, err := tokenRS.SignedString(privateKey)
+
+	return tokenStr, err
 }

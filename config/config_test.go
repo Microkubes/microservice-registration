@@ -16,6 +16,9 @@ func TestLoadConfig(t *testing.T) {
 			"weight": 10,
 			"slots": 100
 	    },
+    	"gatewayUrl": "http://kong:8000",
+	  	"gatewayAdminUrl": "http://kong:8001",
+	  	"systemKey": "/run/secrets/system",
 	    "services": {
 	      "user-microservice": "http://127.0.0.1:8080",
 	      "microservice-user-profile": "http://127.0.0.1:8082"

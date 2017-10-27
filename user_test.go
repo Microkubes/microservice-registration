@@ -2,8 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"testing"
 
 	"gopkg.in/h2non/gock.v1"
@@ -26,6 +33,7 @@ var configBytes = []byte(`
 		    },
 			"gatewayUrl": "http://kong:8000",
 		  	"gatewayAdminUrl": "http://kong:8001",
+		  	"systemKey": "system",
 		    "services": {
 		      "user-microservice": "http://kong:8000/users",
 		      "microservice-user-profile": "http://kong:8000/profiles"
@@ -50,6 +58,16 @@ var (
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code
 func TestRegisterUserCreated(t *testing.T) {
+	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	bytes := x509.MarshalPKCS1PrivateKey(privkey)
+	privateBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: bytes,
+	})
+	ioutil.WriteFile("system", privateBytes, 0644)
+
+	defer os.Remove("system")
+
 	pass := "password"
 	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
@@ -126,4 +144,54 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		})
 
 	test.RegisterUserBadRequest(t, context.Background(), service, ctrl, user)
+}
+
+func TestMakeRequest(t *testing.T) {
+	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	bytes := x509.MarshalPKCS1PrivateKey(privkey)
+	privateBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: bytes,
+	})
+	ioutil.WriteFile("system", privateBytes, 0644)
+
+	defer os.Remove("system")
+
+	payload := []byte(`{
+	    "data": "something"
+	  }`)
+	client := &http.Client{}
+
+	gock.New("http://test.com").
+		Post("/users").
+		Reply(201)
+
+	resp, err := makeRequest(client, http.MethodPost, payload, "http://test.com/users", cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp == nil {
+		t.Fatal("Nil response")
+	}
+}
+
+func TestSelfSignJWT(t *testing.T) {
+	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	bytes := x509.MarshalPKCS1PrivateKey(privkey)
+	privateBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: bytes,
+	})
+	ioutil.WriteFile("system", privateBytes, 0644)
+
+	defer os.Remove("system")
+
+	token, err := selfSignJWT(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if token == "" {
+		t.Fatal("Empty JWT token")
+	}
 }
