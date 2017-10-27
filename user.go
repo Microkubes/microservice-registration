@@ -5,13 +5,11 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	gomail "gopkg.in/gomail.v2"
@@ -45,9 +43,10 @@ type Message struct {
 type MockMessage struct{}
 
 // For the email template
-type email struct {
-	ID   string
-	Name string
+type Email struct {
+	ID              string
+	Name            string
+	VerificationURL string
 }
 
 // UserProfile represents User Profle
@@ -72,9 +71,9 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	client := &http.Client{}
 
 	// Create new user from payload
-	jsonUser, errJSONUser := json.Marshal(ctx.Payload)
-	if errJSONUser != nil {
-		return errJSONUser
+	jsonUser, err := json.Marshal(ctx.Payload)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
 	output := make(chan *http.Response, 1)
@@ -88,40 +87,47 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}, nil)
 
 	var createUserResp *http.Response
-	var err error
 	select {
 	case out := <-output:
 		createUserResp = out
 	case respErr := <-errorsChan:
-		return respErr
+		err = respErr
 	}
 
-	// Inspect status code from response
-	body, _ := ioutil.ReadAll(createUserResp.Body)
-	if createUserResp.StatusCode != 200 && createUserResp.StatusCode != 201 {
-		// Temporary workaround.
-		response := strings.Replace(string(body), "\"", "'", -1)
-		response = strings.Replace(response, "\\", "", -1)
+	body, err := ioutil.ReadAll(createUserResp.Body)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
 
-		err = errors.New(response)
-		return err
+	if createUserResp.StatusCode != 200 && createUserResp.StatusCode != 201 {
+		goaErr := &goa.ErrorResponse{}
+
+		err = json.Unmarshal(body, goaErr)
+		if err != nil {
+			ctx.InternalServerError(goa.ErrInternal(err))
+		}
+
+		switch createUserResp.StatusCode {
+		case 400:
+			return ctx.BadRequest(goaErr)
+		case 500:
+			return ctx.InternalServerError(goaErr)
+		}
 	}
 
 	if err = json.Unmarshal(body, &user); err != nil {
-		return err
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
-	user.Fullname = ctx.Payload.Fullname
-
 	// Update user profile. Create it if does not exist
+	user.Fullname = ctx.Payload.Fullname
 	userProfile := UserProfile{user.Fullname, user.Email}
-	jsonUseProfile, errMarshalUserProfile := json.Marshal(userProfile)
-	if errMarshalUserProfile != nil {
-		return errMarshalUserProfile
+	jsonUseProfile, err := json.Marshal(userProfile)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
 	upOutput := make(chan *http.Response, 1)
-
 	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
 		resp, errUserProfile := makeRequest(client, http.MethodPut, jsonUseProfile, fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], user.ID), c.Config)
 		if errUserProfile != nil {
@@ -136,31 +142,41 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-upOutput:
 		createUpResp = out
 	case respErr := <-upErrorChan:
-		return respErr
+		err = respErr
 	}
 
-	// Inspect status code from response
-	bodyUserProfile, _ := ioutil.ReadAll(createUpResp.Body)
-	if createUpResp.StatusCode != 200 && createUpResp.StatusCode != 204 {
-		// Temporary workaround.
-		response := strings.Replace(string(bodyUserProfile), "\"", "'", -1)
-		response = strings.Replace(response, "\\", "", -1)
+	body, err = ioutil.ReadAll(createUpResp.Body)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
 
-		err = errors.New(response)
-		return ctx.BadRequest(goa.ErrBadRequest(err))
+	if createUpResp.StatusCode != 200 && createUpResp.StatusCode != 204 {
+		goaErr := &goa.ErrorResponse{}
+
+		err = json.Unmarshal(body, goaErr)
+		if err != nil {
+			ctx.InternalServerError(goa.ErrInternal(err))
+		}
+
+		switch createUpResp.StatusCode {
+		case 400:
+			return ctx.BadRequest(goaErr)
+		case 500:
+			return ctx.InternalServerError(goaErr)
+		}
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		userEmail := email{user.ID, user.Fullname}
+		userEmail := Email{user.ID, user.Fullname, c.Config.VerificationURL}
 
-		template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
-		if errTemp != nil {
-			return errTemp
+		template, err := ParseTemplate("./emailTemplate.html", userEmail)
+		if err != nil {
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
 		// Send email for verification
 		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template, c.Config); err != nil {
-			return err
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 	}
 

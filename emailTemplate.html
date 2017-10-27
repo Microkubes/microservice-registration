@@ -7,7 +7,7 @@
 <h1>Hello {{ .Name }},</h1>
 
 <p>
-	<a href="http://localhost:8081/users/{{.ID}}/verify">Verify your registration</a>
+	<a href="{{.VerificationURL}}/{{.ID}}/verify">Verify your registration</a>
 </p>
 </body>
 

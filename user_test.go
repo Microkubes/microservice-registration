@@ -107,6 +107,43 @@ func TestRegisterUserCreated(t *testing.T) {
 	}
 }
 
+// TestRegisterUserInternalServerError tests internal server error scenario
+func TestRegisterUserInternalServerError(t *testing.T) {
+	pass := "password"
+	extID := "qwerc461f9f8eb02aae053f3"
+	user := &app.UserPayload{
+		Fullname:   "fu",
+		Username:   "username",
+		Password:   &pass,
+		Email:      "test",
+		ExternalID: &extID,
+		Roles:      []string{"admin", "user"},
+	}
+
+	gock.New(cfg.Services["user-microservice"]).
+		Post("").
+		Reply(500).
+		JSON(map[string]interface{}{
+			"id":         "59804b3c0000000000000000",
+			"fullname":   user.Fullname,
+			"username":   user.Username,
+			"email":      user.Email,
+			"externalId": "qwe04b3c000000qwertydgfsd",
+			"roles":      []string{"admin", "user"},
+			"active":     false,
+		})
+
+	gock.New(cfg.Services["microservice-user-profile"]).
+		Put(fmt.Sprintf("/%s", "59804b3c0000000000000000")).
+		Reply(500).
+		JSON(map[string]interface{}{
+			"fullname": user.Fullname,
+			"email":    user.Email,
+		})
+
+	test.RegisterUserInternalServerError(t, context.Background(), service, ctrl, user)
+}
+
 // Call generated test helper, this checks that the returned media type is of the
 // correct type (i.e. uses view "default") and validates the media type.
 // Also, it ckecks the returned status code

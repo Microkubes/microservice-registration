@@ -223,6 +223,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
       schemes:
       - http
       summary: register user

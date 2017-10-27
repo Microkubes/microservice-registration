@@ -99,7 +99,6 @@ make build
 To run the registration microservice you'll need to set up some ENV variables:
 
  * **SERVICE_CONFIG_FILE** - Location of the configuration JSON file
- * **API_GATEWAY_URL** - Kong API url (default: http://localhost:8001)
 
 Run the docker image:
 ```bash
@@ -122,7 +121,7 @@ To access the registration service, then instead of calling the service on :8081
 make the call to Kong:
 
 ```bash
-curl -v --header "Host: registration.services.jormugandr.org" http://localhost:8000/user/1
+curl -v -X POST http://localhost:8000/users/profiles
 ```
 
 You should see a log on the terminal running the service that it received and handled the request.
@@ -138,22 +137,21 @@ Find your host IP using ```ifconfig``` or ```ip addr```.
 Assuming your host IP is 192.168.1.10, then run:
 
 ```bash
-docker run -ti -e API_GATEWAY_URL=http://192.168.1.10:8001 microservice-registration
+docker run -ti microservice-registration
 ```
 
 Also, you can build and run docker image using Makefile. Run:
 ```bash
-make run ARGS="-e API_GATEWAY_URL=http://192.168.1.10:8001"
+make run
 ```
 
 If there are no errors, on a different terminal try calling Kong on port :8000
 
 ```bash
-curl -v --header "Host: registration.services.jormugandr.org" http://localhost:8000/user/1
+curl -v -X POST http://localhost:8000/users/profiles
 ```
 
 You should see output (log) in the container running the service.
-
 
 
 # Service configuration
@@ -164,19 +162,41 @@ Here's an example of a JSON configuration file:
 
 ```json
 {
-  "name": "registration-microservice",
-  "port": 8080,
-  "virtual_host": "registration.services.jormugandr.org",
-  "hosts": ["localhost", "registration.services.jormugandr.org"],
-  "weight": 10,
-  "slots": 100
+	"microservice": {
+		"name": "registration-microservice",
+		"port": 8080,
+		"paths": ["/users/register"],
+		"virtual_host": "registration.services.jormugandr.org",
+		"weight": 10,
+		"slots": 100
+	},
+	"gatewayUrl": "http://kong:8000",
+	"gatewayAdminUrl": "http://kong:8001",
+	"systemKey": "/run/secrets/system",
+	"verificationURL": "http://kong:8000/users",
+	"services": {
+		"user-microservice": "http://kong:8000/users",
+		"microservice-user-profile": "http://kong:8000/profiles"
+	},
+	"mail": {
+		"host": "smtp.example.com",
+		"port": "587",
+		"user": "user-mail",
+		"password": "password"
+	}
 }
 ```
 
 Configuration properties:
  * **name** - ```"registration-microservice"``` - the name of the service, do not change this.
  * **port** - ```8080``` - port on which the microservice is running.
+ * **paths** - microservice base paths
  * **virtual_host** - ```"registration.services.jormugandr.org"``` domain name of the service group/cluster. Don't change if not sure.
- * **hosts** - list of valid hosts. Used for proxying and load balancing of the incoming request. You need to have at least the **virtual_host** in the list.
  * **weight** - instance weight - user for load balancing.
  * **slots** - maximal number of service instances under ```"registration.services.jormugandr.org"```.
+ * **gatewayUrl** -  kong proxy url
+ * **gatewayAdminUrl** -  kong admin url
+ * **systemKey** -  path to rhe system key. On docker swarm it should be /run/secrets/system
+ * **verificationURL** -  client verification url (format <url>/userID/verify )
+ * **services** - holds the urls of the microservices
+ * **mail** - holds mail settings

@@ -27,11 +27,14 @@ type Config struct {
 	// SystemKey holds the path to the system key which is provate RSA key
 	SystemKey string `json:"systemKey"`
 
-	// Mail is a map of <service-name>:<service base URL>. For example,
+	// VerificationURL contains the url to the verification action
+	VerificationURL string `json:"verificationURL"`
+
+	// Services is a map of <service-name>:<service base URL>. For example,w
 	// "user-microservice": "http://kong.gateway:8001/user"
 	Services map[string]string `json:"services"`
 
-	// Services is a map of <property>:<value>. For example,
+	// Mail is a map of <property>:<value>. For example,
 	// "host": "smtp.example.com"
 	Mail map[string]string `json:"mail"`
 }

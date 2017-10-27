@@ -6,18 +6,19 @@
 		"virtual_host": "registration.services.jormugandr.org",
 		"weight": 10,
 		"slots": 100
-    },
+	},
 	"gatewayUrl": "http://kong:8000",
-  	"gatewayAdminUrl": "http://kong:8001",
-  	"systemKey": "/run/secrets/system",
-    "services": {
-      "user-microservice": "http://kong:8000",
-      "microservice-user-profile": "http://kong:8000"
-    },
-    "mail": {
-		"host": "smtp.gmail.com",
+	"gatewayAdminUrl": "http://kong:8001",
+	"systemKey": "/run/secrets/system",
+	"verificationURL": "http://kong:8000/users",
+	"services": {
+		"user-microservice": "http://kong:8000/users",
+		"microservice-user-profile": "http://kong:8000/profiles"
+	},
+	"mail": {
+		"host": "smtp.example.com",
 		"port": "587",
-		"user": "user_email",
+		"user": "user-email",
 		"password": "password"
-    }
+	}
 }

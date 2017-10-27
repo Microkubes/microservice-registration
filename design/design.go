@@ -27,6 +27,7 @@ var _ = Resource("user", func() {
 		Payload(UserPayload)
 		Response(Created, UserMedia)
 		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
 	})
 })
 
