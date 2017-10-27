@@ -1,6 +1,0 @@
-{
-	"host": "smtp.example.com",
-	"port": 587,
-	"user": "user_email",
-	"password": "password"
-}

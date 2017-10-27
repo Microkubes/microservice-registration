@@ -2,33 +2,36 @@ package main
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
-	"errors"
+	"encoding/pem"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
-	"strings"
+	"strconv"
+	"time"
 
 	gomail "gopkg.in/gomail.v2"
 
 	"github.com/JormungandrK/microservice-registration/app"
+	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/afex/hystrix-go/hystrix"
+	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"
+	uuid "github.com/satori/go.uuid"
 )
 
 // CollectionEmail is an interface to access to the email func.
 type CollectionEmail interface {
-	SendEmail(id string, username string, email string, template string) error
+	SendEmail(id string, username string, email string, template string, cfg *config.Config) error
 }
 
 // UserController implements the user resource.
 type UserController struct {
 	*goa.Controller
 	emailCollection CollectionEmail
+	Config          *config.Config
 }
 
 // Message wraps a gomail.Message to embed methods in models.
@@ -39,24 +42,11 @@ type Message struct {
 // MockMessage for testing
 type MockMessage struct{}
 
-// For the email template
-type email struct {
-	ID   string
-	Name string
-}
-
-// EmailConfig represents configuration for email.
-type EmailConfig struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
-// URLConfig represents urls from the external services
-type URLConfig struct {
-	UserService        string `json:"userService,omitempty"`
-	UserProfileService string `json:"userProfileService,omitempty"`
+// Email holds info for the email template
+type Email struct {
+	ID              string
+	Name            string
+	VerificationURL string
 }
 
 // UserProfile represents User Profle
@@ -66,10 +56,11 @@ type UserProfile struct {
 }
 
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service, emailCollection CollectionEmail) *UserController {
+func NewUserController(service *goa.Service, emailCollection CollectionEmail, config *config.Config) *UserController {
 	return &UserController{
 		Controller:      service.NewController("UserController"),
 		emailCollection: emailCollection,
+		Config:          config,
 	}
 }
 
@@ -79,29 +70,15 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
 
-	var conf string
-
-	if len(strings.TrimSpace(os.Getenv("URL_CONFIG_JSON"))) == 0 {
-		conf = "./urlConfig.json"
-	} else {
-		conf = os.Getenv("URL_CONFIG_JSON")
-	}
-
-	urlConfig, errURL := URLConfigFromFile(conf)
-	if errURL != nil {
-		return errURL
-	}
-
 	// Create new user from payload
-	jsonUser, errJSONUser := json.Marshal(ctx.Payload)
-	if errJSONUser != nil {
-		return errJSONUser
+	jsonUser, err := json.Marshal(ctx.Payload)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
 	output := make(chan *http.Response, 1)
-
 	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
-		resp, err := CreateNewUser(client, jsonUser, urlConfig.UserService)
+		resp, err := makeRequest(client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
 		if err != nil {
 			return err
 		}
@@ -110,43 +87,49 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}, nil)
 
 	var createUserResp *http.Response
-	var err error
 	select {
 	case out := <-output:
 		createUserResp = out
 	case respErr := <-errorsChan:
-		return respErr
-		// failure
+		err = respErr
 	}
 
-	// Inspect status code from response
-	body, _ := ioutil.ReadAll(createUserResp.Body)
-	if createUserResp.StatusCode != 200 && createUserResp.StatusCode != 201 {
-		// Temporary workaround.
-		response := strings.Replace(string(body), "\"", "'", -1)
-		response = strings.Replace(response, "\\", "", -1)
+	body, err := ioutil.ReadAll(createUserResp.Body)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
 
-		err = errors.New(response)
-		return err
+	if createUserResp.StatusCode != 200 && createUserResp.StatusCode != 201 {
+		goaErr := &goa.ErrorResponse{}
+
+		err = json.Unmarshal(body, goaErr)
+		if err != nil {
+			ctx.InternalServerError(goa.ErrInternal(err))
+		}
+
+		switch createUserResp.StatusCode {
+		case 400:
+			return ctx.BadRequest(goaErr)
+		case 500:
+			return ctx.InternalServerError(goaErr)
+		}
 	}
 
 	if err = json.Unmarshal(body, &user); err != nil {
-		return err
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
-	user.Fullname = ctx.Payload.Fullname
-
 	// Update user profile. Create it if does not exist
+	user.Fullname = ctx.Payload.Fullname
 	userProfile := UserProfile{user.Fullname, user.Email}
-	jsonUseProfile, errMarshalUserProfile := json.Marshal(userProfile)
-	if errMarshalUserProfile != nil {
-		return errMarshalUserProfile
+	jsonUseProfile, err := json.Marshal(userProfile)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
 	upOutput := make(chan *http.Response, 1)
-
 	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
-		resp, errUserProfile := UpdateUserProfile(client, jsonUseProfile, user.ID, urlConfig.UserProfileService)
+		resp, errUserProfile := makeRequest(client, http.MethodPut, jsonUseProfile, fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], user.ID), c.Config)
 		if errUserProfile != nil {
 			return errUserProfile
 		}
@@ -159,70 +142,59 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-upOutput:
 		createUpResp = out
 	case respErr := <-upErrorChan:
-		return respErr
+		err = respErr
 	}
 
-	// Inspect status code from response
-	bodyUserProfile, _ := ioutil.ReadAll(createUpResp.Body)
-	if createUpResp.StatusCode != 200 && createUpResp.StatusCode != 204 {
-		// Temporary workaround.
-		response := strings.Replace(string(bodyUserProfile), "\"", "'", -1)
-		response = strings.Replace(response, "\\", "", -1)
+	body, err = ioutil.ReadAll(createUpResp.Body)
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
 
-		err = errors.New(response)
-		return ctx.BadRequest(goa.ErrBadRequest(err))
+	if createUpResp.StatusCode != 200 && createUpResp.StatusCode != 204 {
+		goaErr := &goa.ErrorResponse{}
+
+		err = json.Unmarshal(body, goaErr)
+		if err != nil {
+			ctx.InternalServerError(goa.ErrInternal(err))
+		}
+
+		switch createUpResp.StatusCode {
+		case 400:
+			return ctx.BadRequest(goaErr)
+		case 500:
+			return ctx.InternalServerError(goaErr)
+		}
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		userEmail := email{user.ID, user.Fullname}
+		userEmail := Email{user.ID, user.Fullname, c.Config.VerificationURL}
 
-		template, errTemp := ParseTemplate("./emailTemplate.html", userEmail)
-		if errTemp != nil {
-			return errTemp
+		template, err := ParseTemplate("./emailTemplate.html", userEmail)
+		if err != nil {
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
 		// Send email for verification
-		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template); err != nil {
-			return err
+		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template, c.Config); err != nil {
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 	}
 
 	return ctx.Created(user)
 }
 
-// CreateNewUser creates a new user.
-func CreateNewUser(client *http.Client, payload []byte, url string) (*http.Response, error) {
-	resp, err := client.Post(fmt.Sprintf("%s/users", url), "application/json", bytes.NewBuffer(payload))
-	return resp, err
-}
-
-// UpdateUserProfile updates user profile.
-func UpdateUserProfile(client *http.Client, payload []byte, id string, url string) (*http.Response, error) {
-	resp, err := PutRequest(fmt.Sprintf("%s/profiles/%s", url, id), bytes.NewBuffer(payload), client)
-	return resp, err
-}
-
 // SendEmail sends an email for verification.
-func (mail *Message) SendEmail(id string, username string, email string, template string) error {
-	var emailConf string
-
-	if len(strings.TrimSpace(os.Getenv("URL_EMAIL_CONFIG_JSON"))) == 0 {
-		emailConf = "./emailConfig.json"
-	} else {
-		emailConf = os.Getenv("URL_EMAIL_CONFIG_JSON")
-	}
-	emailConfig, err := EmailConfigFromFile(emailConf)
-
-	if err != nil {
-		return err
-	}
-
-	mail.msg.SetHeader("From", emailConfig.User)
+func (mail *Message) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
+	mail.msg.SetHeader("From", cfg.Mail["user"])
 	mail.msg.SetHeader("To", email)
 	mail.msg.SetHeader("Subject", "Verify Your Account!")
 	mail.msg.SetBody("text/html", template)
 
-	d := gomail.NewDialer(emailConfig.Host, emailConfig.Port, emailConfig.User, emailConfig.Password)
+	port, err := strconv.Atoi(cfg.Mail["port"])
+	if err != nil {
+		return err
+	}
+	d := gomail.NewDialer(cfg.Mail["host"], port, cfg.Mail["user"], cfg.Mail["password"])
 
 	if err := d.DialAndSend(mail.msg); err != nil {
 		return err
@@ -231,49 +203,8 @@ func (mail *Message) SendEmail(id string, username string, email string, templat
 }
 
 // SendEmail mock sends email for verification.
-func (mail *MockMessage) SendEmail(id string, username string, email string, template string) error {
+func (mail *MockMessage) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
 	return nil
-}
-
-// EmailConfigFromFile reads email configuration from config file.
-func EmailConfigFromFile(configFile string) (*EmailConfig, error) {
-	var config EmailConfig
-	cnf, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(cnf, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-// URLConfigFromFile reads url configuration from config file.
-func URLConfigFromFile(configFile string) (*URLConfig, error) {
-	var config URLConfig
-	cnf, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(cnf, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	// Validate urls
-	c := &config
-	_, errURLUser := url.ParseRequestURI(string(c.UserService))
-	if errURLUser != nil {
-		return nil, errURLUser
-	}
-	_, errURLUserProfile := url.ParseRequestURI(string(c.UserService))
-	if errURLUserProfile != nil {
-		return nil, errURLUserProfile
-	}
-
-	return &config, nil
 }
 
 // ParseTemplate creates a template using emailTemplate.html
@@ -295,16 +226,56 @@ func ParseTemplate(templateFileName string, data interface{}) (string, error) {
 	return buff.String(), nil
 }
 
-// PutRequest Because http.Client does not provide PUT method
-func PutRequest(url string, data io.Reader, client *http.Client) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPut, url, data)
+// makeRequest makes http request
+func makeRequest(client *http.Client, method string, payload []byte, url string, cfg *config.Config) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
-	resp, error := client.Do(req)
-	if error != nil {
-		return resp, error
+
+	token, err := selfSignJWT(cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	return resp, nil
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
+// selfSignJWT generates a JWT token which is self-signed with the system private key.
+// This token is used for accesing the user and user-profile microservices.
+func selfSignJWT(cfg *config.Config) (string, error) {
+	key, err := ioutil.ReadFile(cfg.SystemKey)
+	if err != nil {
+		return "", err
+	}
+
+	block, _ := pem.Decode(key)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	claims := jwtgo.MapClaims{
+		"iss":      "microservice-registration",
+		"exp":      time.Now().Add(time.Duration(30) * time.Second).Unix(),
+		"jti":      uuid.NewV4().String(),
+		"nbf":      0,
+		"sub":      "microservice-registration",
+		"scope":    "api:read",
+		"userId":   "system",
+		"username": "system",
+		"roles":    "system",
+	}
+
+	tokenRS := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, claims)
+	tokenStr, err := tokenRS.SignedString(privateKey)
+
+	return tokenStr, err
 }

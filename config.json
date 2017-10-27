@@ -1,8 +1,24 @@
 {
-  "name": "registration-microservice",
-  "port": 8081,
-  "virtual_host": "registration.services.jormugandr.org",
-  "paths": ["/users"],
-  "weight": 10,
-  "slots": 100
+	"microservice": {
+		"name": "registration-microservice",
+		"port": 8080,
+		"paths": ["/users/register"],
+		"virtual_host": "registration.services.jormugandr.org",
+		"weight": 10,
+		"slots": 100
+	},
+	"gatewayUrl": "http://kong:8000",
+	"gatewayAdminUrl": "http://kong:8001",
+	"systemKey": "/run/secrets/system",
+	"verificationURL": "http://kong:8000/users",
+	"services": {
+		"user-microservice": "http://kong:8000/users",
+		"microservice-user-profile": "http://kong:8000/profiles"
+	},
+	"mail": {
+		"host": "smtp.example.com",
+		"port": "587",
+		"user": "user-email",
+		"password": "password"
+	}
 }
