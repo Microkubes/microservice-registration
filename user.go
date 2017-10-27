@@ -42,7 +42,7 @@ type Message struct {
 // MockMessage for testing
 type MockMessage struct{}
 
-// For the email template
+// Email holds info for the email template
 type Email struct {
 	ID              string
 	Name            string
