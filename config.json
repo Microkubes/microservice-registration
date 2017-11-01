@@ -16,9 +16,10 @@
 		"microservice-user-profile": "http://kong:8000/profiles"
 	},
 	"mail": {
-		"host": "smtp.example.com",
-		"port": "587",
-		"user": "user-email",
-		"password": "password"
+		"host": "fakesmtp",
+		"port": "25",
+		"user": "fake@email.com",
+		"password": "password",
+		"email": "dev@jormungandr.org"
 	}
 }
