@@ -94,6 +94,10 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		err = respErr
 	}
 
+	if err != nil {
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
+
 	body, err := ioutil.ReadAll(createUserResp.Body)
 	if err != nil {
 		return ctx.InternalServerError(goa.ErrInternal(err))
@@ -185,7 +189,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 // SendEmail sends an email for verification.
 func (mail *Message) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
-	mail.msg.SetHeader("From", cfg.Mail["user"])
+	mail.msg.SetHeader("From", cfg.Mail["email"])
 	mail.msg.SetHeader("To", email)
 	mail.msg.SetHeader("Subject", "Verify Your Account!")
 	mail.msg.SetBody("text/html", template)
