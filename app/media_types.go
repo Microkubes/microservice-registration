@@ -12,7 +12,6 @@ package app
 
 import (
 	"github.com/goadesign/goa"
-	"unicode/utf8"
 )
 
 // users media type (default view)
@@ -31,8 +30,6 @@ type Users struct {
 	ID string `form:"id" json:"id" xml:"id"`
 	// Roles of user
 	Roles []string `form:"roles" json:"roles" xml:"roles"`
-	// Name of user
-	Username string `form:"username" json:"username" xml:"username"`
 }
 
 // Validate validates the Users media type instance.
@@ -42,9 +39,6 @@ func (mt *Users) Validate() (err error) {
 	}
 	if mt.Fullname == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "fullname"))
-	}
-	if mt.Username == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "username"))
 	}
 	if mt.Email == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "email"))
@@ -61,12 +55,6 @@ func (mt *Users) Validate() (err error) {
 	}
 	if ok := goa.ValidatePattern(`^([a-zA-Z0-9 ]{4,30})$`, mt.Fullname); !ok {
 		err = goa.MergeErrors(err, goa.InvalidPatternError(`response.fullname`, mt.Fullname, `^([a-zA-Z0-9 ]{4,30})$`))
-	}
-	if utf8.RuneCountInString(mt.Username) < 4 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`response.username`, mt.Username, utf8.RuneCountInString(mt.Username), 4, true))
-	}
-	if utf8.RuneCountInString(mt.Username) > 50 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`response.username`, mt.Username, utf8.RuneCountInString(mt.Username), 50, false))
 	}
 	return
 }

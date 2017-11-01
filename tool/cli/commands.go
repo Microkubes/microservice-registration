@@ -59,14 +59,15 @@ Payload example:
 
 {
    "active": true,
-   "email": "lauretta.beer@schneiderterry.biz",
-   "externalId": "Cupiditate cumque quibusdam accusantium et.",
+   "email": "brigitte_koepp@ferry.net",
+   "externalId": "Veritatis veniam sed voluptatibus.",
    "fullname": "ApPq",
-   "password": "arnpercd",
+   "password": "x75md877qp",
    "roles": [
+      "Placeat reprehenderit similique quo.",
+      "Placeat reprehenderit similique quo.",
       "Placeat reprehenderit similique quo."
-   ],
-   "username": "9ifp30qa"
+   ]
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
