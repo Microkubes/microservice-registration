@@ -39,18 +39,16 @@ var UserMedia = MediaType("application/vnd.goa.user+json", func() {
 	Attributes(func() {
 		Attribute("id", String, "Unique user ID")
 		Attribute("fullname")
-		Attribute("username")
 		Attribute("email")
 		Attribute("roles")
 		Attribute("externalId")
 		Attribute("active")
-		Required("id", "fullname", "username", "email", "roles", "externalId", "active")
+		Required("id", "fullname", "email", "roles", "externalId", "active")
 	})
 
 	View("default", func() {
 		Attribute("id")
 		Attribute("fullname")
-		Attribute("username")
 		Attribute("email")
 		Attribute("roles")
 		Attribute("externalId")
@@ -65,10 +63,6 @@ var UserPayload = Type("UserPayload", func() {
 	Attribute("fullname", String, "Full name of user", func() {
 		Pattern("^([a-zA-Z0-9 ]{4,30})$")
 	})
-	Attribute("username", String, "Name of user", func() {
-		MinLength(4)
-		MaxLength(50)
-	})
 	Attribute("email", String, "Email of user", func() {
 		Format("email")
 	})
@@ -82,7 +76,7 @@ var UserPayload = Type("UserPayload", func() {
 		Default(false)
 	})
 
-	Required("fullname", "username", "email", "roles")
+	Required("fullname", "email")
 })
 
 // Swagger UI
