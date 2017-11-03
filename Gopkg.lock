@@ -38,10 +38,16 @@
   version = "v5.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/go-gomail/gomail"
+  packages = ["."]
+  revision = "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1"
+
+[[projects]]
+  branch = "master"
   name = "github.com/goadesign/goa"
   packages = [".","client","design","design/apidsl","dslengine","goatest","middleware","uuid"]
-  revision = "5646a430cdeb66983d5ace3384e0a667c185abc7"
-  version = "v1.3.0"
+  revision = "948c35808c713f7557fe2be38f09a628c6398c2d"
 
 [[projects]]
   branch = "master"
@@ -65,7 +71,7 @@
   branch = "master"
   name = "github.com/manveru/faker"
   packages = ["."]
-  revision = "f5baee6d308c0991462da8a03d93a8c61e6cd047"
+  revision = "9fbc68a78c4dbc7914e1a23f88f126bea4383b97"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -104,12 +110,6 @@
   revision = "2caba252f4dc53eaf6b553000885530023f54623"
 
 [[projects]]
-  name = "gopkg.in/gomail.v2"
-  packages = ["."]
-  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
-  version = "2.0.0"
-
-[[projects]]
   name = "gopkg.in/h2non/gock.v1"
   packages = ["."]
   revision = "84d599244901620fb3eb96473eb9e50619f69b47"
@@ -118,6 +118,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aff2668c8149950477cda727927af07f0c123e412a40b08000d0fa0510c75868"
+  inputs-digest = "249d2b391d89ac00a30fcbda338c3cc740e33bcdc3f83c64c2979bccc484900b"
   solver-name = "gps-cdcl"
   solver-version = 1

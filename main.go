@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"gopkg.in/gomail.v2"
-
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/JormungandrK/microservice-tools/gateway"
+	"github.com/go-gomail/gomail"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )

@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	gomail "gopkg.in/gomail.v2"
+	"github.com/go-gomail/gomail"
 
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/config"
