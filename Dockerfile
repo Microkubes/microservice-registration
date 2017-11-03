@@ -5,7 +5,7 @@ RUN apk add --no-cache git
 
 COPY . /go/src/github.com/JormungandrK/microservice-registration
 
-WORKDIR /go/src/github.com/JormungandrK/user-microservice
+WORKDIR /go/src/github.com/JormungandrK/microservice-registration
 
 RUN go get -u -v github.com/golang/dep/cmd/dep
 RUN dep ensure -v
