@@ -19,3 +19,6 @@ keys
 ssh-keys
 .keys
 .ssh-keys
+
+# Go Dependency Management
+vendor
