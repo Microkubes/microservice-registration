@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package client
 
@@ -29,6 +29,8 @@ type userPayload struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
 	Roles []string `form:"roles,omitempty" json:"roles,omitempty" xml:"roles,omitempty"`
+	// Email verification token
+	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
 	// Name of user
 	Username *string `form:"username,omitempty" json:"username,omitempty" xml:"username,omitempty"`
 }
@@ -109,6 +111,9 @@ func (ut *userPayload) Publicize() *UserPayload {
 	if ut.Roles != nil {
 		pub.Roles = ut.Roles
 	}
+	if ut.Token != nil {
+		pub.Token = ut.Token
+	}
 	if ut.Username != nil {
 		pub.Username = *ut.Username
 	}
@@ -129,6 +134,8 @@ type UserPayload struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
 	Roles []string `form:"roles" json:"roles" xml:"roles"`
+	// Email verification token
+	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
 	// Name of user
 	Username string `form:"username" json:"username" xml:"username"`
 }

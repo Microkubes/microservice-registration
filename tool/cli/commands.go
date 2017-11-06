@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package cli
 
@@ -66,7 +66,8 @@ Payload example:
    "roles": [
       "Placeat reprehenderit similique quo."
    ],
-   "username": "9ifp30qa"
+   "token": "Doloremque aut sed ut impedit voluptatum debitis.",
+   "username": "d23v789x"
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}

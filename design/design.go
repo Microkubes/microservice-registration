@@ -81,6 +81,7 @@ var UserPayload = Type("UserPayload", func() {
 	Attribute("active", Boolean, "Status of user account", func() {
 		Default(false)
 	})
+	Attribute("token", String, "Email verification token")
 
 	Required("fullname", "username", "email", "roles")
 })

@@ -14,7 +14,8 @@ definitions:
       password: arnpercd
       roles:
       - Placeat reprehenderit similique quo.
-      username: 9ifp30qa
+      token: Doloremque aut sed ut impedit voluptatum debitis.
+      username: d23v789x
     properties:
       active:
         default: false
@@ -49,9 +50,13 @@ definitions:
           example: Placeat reprehenderit similique quo.
           type: string
         type: array
+      token:
+        description: Email verification token
+        example: Doloremque aut sed ut impedit voluptatum debitis.
+        type: string
       username:
         description: Name of user
-        example: 9ifp30qa
+        example: d23v789x
         maxLength: 50
         minLength: 4
         type: string
