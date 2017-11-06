@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -44,9 +46,9 @@ type MockMessage struct{}
 
 // Email holds info for the email template
 type Email struct {
-	ID              string
 	Name            string
 	VerificationURL string
+	Token           string
 }
 
 // UserProfile represents User Profle
@@ -69,6 +71,9 @@ func NewUserController(service *goa.Service, emailCollection CollectionEmail, co
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
+
+	token := generateToken(42)
+	ctx.Payload.Token = &token
 
 	// Create new user from payload
 	jsonUser, err := json.Marshal(ctx.Payload)
@@ -167,7 +172,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		userEmail := Email{user.ID, user.Fullname, c.Config.VerificationURL}
+		userEmail := Email{user.Fullname, c.Config.VerificationURL, token}
 
 		template, err := ParseTemplate("./emailTemplate.html", userEmail)
 		if err != nil {
@@ -278,4 +283,12 @@ func selfSignJWT(cfg *config.Config) (string, error) {
 	tokenStr, err := tokenRS.SignedString(privateKey)
 
 	return tokenStr, err
+}
+
+func generateToken(n int) string {
+	rv := make([]byte, n)
+	if _, err := rand.Reader.Read(rv); err != nil {
+		panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(rv)
 }
