@@ -8,14 +8,15 @@ definitions:
     description: UserPayload
     example:
       active: true
-      email: lauretta.beer@schneiderterry.biz
-      externalId: Cupiditate cumque quibusdam accusantium et.
+      email: brigitte_koepp@ferry.net
+      externalId: Veritatis veniam sed voluptatibus.
       fullname: ApPq
-      password: arnpercd
+      password: x75md877qp
       roles:
       - Placeat reprehenderit similique quo.
-      token: Doloremque aut sed ut impedit voluptatum debitis.
-      username: d23v789x
+      - Placeat reprehenderit similique quo.
+      - Placeat reprehenderit similique quo.
+      token: Nostrum consequatur.
     properties:
       active:
         default: false
@@ -24,12 +25,12 @@ definitions:
         type: boolean
       email:
         description: Email of user
-        example: lauretta.beer@schneiderterry.biz
+        example: brigitte_koepp@ferry.net
         format: email
         type: string
       externalId:
         description: External id of user
-        example: Cupiditate cumque quibusdam accusantium et.
+        example: Veritatis veniam sed voluptatibus.
         type: string
       fullname:
         description: Full name of user
@@ -38,7 +39,7 @@ definitions:
         type: string
       password:
         description: Password of user
-        example: arnpercd
+        example: x75md877qp
         maxLength: 30
         minLength: 6
         type: string
@@ -46,25 +47,19 @@ definitions:
         description: Roles of user
         example:
         - Placeat reprehenderit similique quo.
+        - Placeat reprehenderit similique quo.
+        - Placeat reprehenderit similique quo.
         items:
           example: Placeat reprehenderit similique quo.
           type: string
         type: array
       token:
         description: Email verification token
-        example: Doloremque aut sed ut impedit voluptatum debitis.
-        type: string
-      username:
-        description: Name of user
-        example: d23v789x
-        maxLength: 50
-        minLength: 4
+        example: Nostrum consequatur.
         type: string
     required:
     - fullname
-    - username
     - email
-    - roles
     title: UserPayload
     type: object
   error:
@@ -116,7 +111,6 @@ definitions:
       - Placeat reprehenderit similique quo.
       - Placeat reprehenderit similique quo.
       - Placeat reprehenderit similique quo.
-      username: s5gsubpgbu
     properties:
       active:
         default: false
@@ -151,16 +145,9 @@ definitions:
           example: Placeat reprehenderit similique quo.
           type: string
         type: array
-      username:
-        description: Name of user
-        example: s5gsubpgbu
-        maxLength: 50
-        minLength: 4
-        type: string
     required:
     - id
     - fullname
-    - username
     - email
     - roles
     - externalId

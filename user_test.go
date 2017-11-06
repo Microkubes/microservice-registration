@@ -72,7 +72,6 @@ func TestRegisterUserCreated(t *testing.T) {
 	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fullname",
-		Username:   "username",
 		Password:   &pass,
 		Email:      "example@mail.com",
 		ExternalID: &extID,
@@ -85,7 +84,6 @@ func TestRegisterUserCreated(t *testing.T) {
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
 			"fullname":   user.Fullname,
-			"username":   user.Username,
 			"email":      user.Email,
 			"externalId": "qwe04b3c000000qwertydgfsd",
 			"roles":      []string{"admin", "user"},
@@ -113,7 +111,6 @@ func TestRegisterUserInternalServerError(t *testing.T) {
 	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fu",
-		Username:   "username",
 		Password:   &pass,
 		Email:      "test",
 		ExternalID: &extID,
@@ -126,7 +123,6 @@ func TestRegisterUserInternalServerError(t *testing.T) {
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
 			"fullname":   user.Fullname,
-			"username":   user.Username,
 			"email":      user.Email,
 			"externalId": "qwe04b3c000000qwertydgfsd",
 			"roles":      []string{"admin", "user"},
@@ -152,7 +148,6 @@ func TestRegisterUserBadRequest(t *testing.T) {
 	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
 		Fullname:   "fu",
-		Username:   "username",
 		Password:   &pass,
 		Email:      "test",
 		ExternalID: &extID,
@@ -165,7 +160,6 @@ func TestRegisterUserBadRequest(t *testing.T) {
 		JSON(map[string]interface{}{
 			"id":         "59804b3c0000000000000000",
 			"fullname":   user.Fullname,
-			"username":   user.Username,
 			"email":      user.Email,
 			"externalId": "qwe04b3c000000qwertydgfsd",
 			"roles":      []string{"admin", "user"},

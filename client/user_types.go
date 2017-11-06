@@ -31,8 +31,6 @@ type userPayload struct {
 	Roles []string `form:"roles,omitempty" json:"roles,omitempty" xml:"roles,omitempty"`
 	// Email verification token
 	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
-	// Name of user
-	Username *string `form:"username,omitempty" json:"username,omitempty" xml:"username,omitempty"`
 }
 
 // Finalize sets the default values for userPayload type instance.
@@ -48,14 +46,8 @@ func (ut *userPayload) Validate() (err error) {
 	if ut.Fullname == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "fullname"))
 	}
-	if ut.Username == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "username"))
-	}
 	if ut.Email == nil {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "email"))
-	}
-	if ut.Roles == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "roles"))
 	}
 	if ut.Email != nil {
 		if err2 := goa.ValidateFormat(goa.FormatEmail, *ut.Email); err2 != nil {
@@ -75,16 +67,6 @@ func (ut *userPayload) Validate() (err error) {
 	if ut.Password != nil {
 		if utf8.RuneCountInString(*ut.Password) > 30 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError(`request.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 30, false))
-		}
-	}
-	if ut.Username != nil {
-		if utf8.RuneCountInString(*ut.Username) < 4 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError(`request.username`, *ut.Username, utf8.RuneCountInString(*ut.Username), 4, true))
-		}
-	}
-	if ut.Username != nil {
-		if utf8.RuneCountInString(*ut.Username) > 50 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError(`request.username`, *ut.Username, utf8.RuneCountInString(*ut.Username), 50, false))
 		}
 	}
 	return
@@ -114,9 +96,6 @@ func (ut *userPayload) Publicize() *UserPayload {
 	if ut.Token != nil {
 		pub.Token = ut.Token
 	}
-	if ut.Username != nil {
-		pub.Username = *ut.Username
-	}
 	return &pub
 }
 
@@ -133,11 +112,9 @@ type UserPayload struct {
 	// Password of user
 	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
-	Roles []string `form:"roles" json:"roles" xml:"roles"`
+	Roles []string `form:"roles,omitempty" json:"roles,omitempty" xml:"roles,omitempty"`
 	// Email verification token
 	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
-	// Name of user
-	Username string `form:"username" json:"username" xml:"username"`
 }
 
 // Validate validates the UserPayload type instance.
@@ -145,14 +122,8 @@ func (ut *UserPayload) Validate() (err error) {
 	if ut.Fullname == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "fullname"))
 	}
-	if ut.Username == "" {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "username"))
-	}
 	if ut.Email == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "email"))
-	}
-	if ut.Roles == nil {
-		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "roles"))
 	}
 	if err2 := goa.ValidateFormat(goa.FormatEmail, ut.Email); err2 != nil {
 		err = goa.MergeErrors(err, goa.InvalidFormatError(`type.email`, ut.Email, goa.FormatEmail, err2))
@@ -169,12 +140,6 @@ func (ut *UserPayload) Validate() (err error) {
 		if utf8.RuneCountInString(*ut.Password) > 30 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError(`type.password`, *ut.Password, utf8.RuneCountInString(*ut.Password), 30, false))
 		}
-	}
-	if utf8.RuneCountInString(ut.Username) < 4 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`type.username`, ut.Username, utf8.RuneCountInString(ut.Username), 4, true))
-	}
-	if utf8.RuneCountInString(ut.Username) > 50 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError(`type.username`, ut.Username, utf8.RuneCountInString(ut.Username), 50, false))
 	}
 	return
 }
