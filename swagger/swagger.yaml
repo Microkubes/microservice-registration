@@ -16,6 +16,7 @@ definitions:
       - Placeat reprehenderit similique quo.
       - Placeat reprehenderit similique quo.
       - Placeat reprehenderit similique quo.
+      token: Nostrum consequatur.
     properties:
       active:
         default: false
@@ -52,6 +53,10 @@ definitions:
           example: Placeat reprehenderit similique quo.
           type: string
         type: array
+      token:
+        description: Email verification token
+        example: Nostrum consequatur.
+        type: string
     required:
     - fullname
     - email
