@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"gopkg.in/gomail.v2"
-
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/config"
 	"github.com/JormungandrK/microservice-tools/gateway"
+	"github.com/JormungandrK/microservice-tools/rabbitmq"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )
@@ -26,8 +25,21 @@ func main() {
 	cfg, err := config.LoadConfig(cf)
 	if err != nil {
 		service.LogError("config", "err", err)
-		return
+		panic(err)
 	}
+
+	connRabbitMQ, channelRabbitMQ, err := rabbitmq.Dial(
+		cfg.RabbitMQ["username"],
+		cfg.RabbitMQ["password"],
+		cfg.RabbitMQ["host"],
+		cfg.RabbitMQ["post"],
+	)
+	if err != nil {
+		service.LogError("rabbitmq", "err", err)
+		panic(err)
+	}
+	defer connRabbitMQ.Close()
+	defer channelRabbitMQ.Close()
 
 	registration := gateway.NewKongGateway(cfg.GatewayAdminURL, &http.Client{}, &cfg.Microservice)
 	err = registration.SelfRegister()
@@ -49,8 +61,8 @@ func main() {
 	// Mount "user" controller
 	c2 := NewUserController(
 		service,
-		&Message{msg: gomail.NewMessage()},
 		cfg,
+		&rabbitmq.AMQPChannel{channelRabbitMQ},
 	)
 	app.MountUserController(service, c2)
 

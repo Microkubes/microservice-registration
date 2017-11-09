@@ -2,51 +2,38 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"time"
-
-	gomail "gopkg.in/gomail.v2"
 
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/config"
+	"github.com/JormungandrK/microservice-tools/rabbitmq"
 	"github.com/afex/hystrix-go/hystrix"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"
 	uuid "github.com/satori/go.uuid"
 )
 
-// CollectionEmail is an interface to access to the email func.
-type CollectionEmail interface {
-	SendEmail(id string, username string, email string, template string, cfg *config.Config) error
-}
-
 // UserController implements the user resource.
 type UserController struct {
 	*goa.Controller
-	emailCollection CollectionEmail
 	Config          *config.Config
+	ChannelRabbitMQ rabbitmq.Channel
 }
-
-// Message wraps a gomail.Message to embed methods in models.
-type Message struct {
-	msg *gomail.Message
-}
-
-// MockMessage for testing
-type MockMessage struct{}
 
 // Email holds info for the email template
 type Email struct {
-	ID              string
-	Name            string
-	VerificationURL string
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+	Token string `json:"token,omitempty"`
 }
 
 // UserProfile represents User Profle
@@ -56,19 +43,23 @@ type UserProfile struct {
 }
 
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service, emailCollection CollectionEmail, config *config.Config) *UserController {
+func NewUserController(service *goa.Service, config *config.Config, channelRabbitMQ rabbitmq.Channel) *UserController {
 	return &UserController{
 		Controller:      service.NewController("UserController"),
-		emailCollection: emailCollection,
 		Config:          config,
+		ChannelRabbitMQ: channelRabbitMQ,
 	}
 }
 
 // Register runs the register action. It creates a user and user profile.
-// Also, it sends an email to the user if user does not come from external services.
+// Also, it sends a massage to the queue in ordet microservice-mail to send
+// varification mail to the user.
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
 	client := &http.Client{}
+
+	token := generateToken(42)
+	ctx.Payload.Token = &token
 
 	// Create new user from payload
 	jsonUser, err := json.Marshal(ctx.Payload)
@@ -91,11 +82,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-output:
 		createUserResp = out
 	case respErr := <-errorsChan:
-		err = respErr
-	}
-
-	if err != nil {
-		return ctx.InternalServerError(goa.ErrInternal(err))
+		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err := ioutil.ReadAll(createUserResp.Body)
@@ -146,7 +133,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-upOutput:
 		createUpResp = out
 	case respErr := <-upErrorChan:
-		err = respErr
+		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err = ioutil.ReadAll(createUpResp.Body)
@@ -171,63 +158,18 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		userEmail := Email{user.ID, user.Fullname, c.Config.VerificationURL}
-
-		template, err := ParseTemplate("./emailTemplate.html", userEmail)
+		emailInfo := Email{user.ID, user.Fullname, user.Email, token}
+		body, err := json.Marshal(emailInfo)
 		if err != nil {
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
-		// Send email for verification
-		if err = c.emailCollection.SendEmail(user.ID, user.Fullname, user.Email, template, c.Config); err != nil {
+		if err := c.ChannelRabbitMQ.Send("verification-email", body); err != nil {
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 	}
 
 	return ctx.Created(user)
-}
-
-// SendEmail sends an email for verification.
-func (mail *Message) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
-	mail.msg.SetHeader("From", cfg.Mail["email"])
-	mail.msg.SetHeader("To", email)
-	mail.msg.SetHeader("Subject", "Verify Your Account!")
-	mail.msg.SetBody("text/html", template)
-
-	port, err := strconv.Atoi(cfg.Mail["port"])
-	if err != nil {
-		return err
-	}
-	d := gomail.NewDialer(cfg.Mail["host"], port, cfg.Mail["user"], cfg.Mail["password"])
-
-	if err := d.DialAndSend(mail.msg); err != nil {
-		return err
-	}
-	return nil
-}
-
-// SendEmail mock sends email for verification.
-func (mail *MockMessage) SendEmail(id string, username string, email string, template string, cfg *config.Config) error {
-	return nil
-}
-
-// ParseTemplate creates a template using emailTemplate.html
-func ParseTemplate(templateFileName string, data interface{}) (string, error) {
-	tmpl, err := template.ParseFiles(templateFileName)
-	if err != nil {
-		return "", err
-	}
-
-	// Stores the parsed template
-	var buff bytes.Buffer
-
-	// Send the parsed template to buff
-	err = tmpl.Execute(&buff, data)
-	if err != nil {
-		return "", err
-	}
-
-	return buff.String(), nil
 }
 
 // makeRequest makes http request
@@ -282,4 +224,12 @@ func selfSignJWT(cfg *config.Config) (string, error) {
 	tokenStr, err := tokenRS.SignedString(privateKey)
 
 	return tokenStr, err
+}
+
+func generateToken(n int) string {
+	rv := make([]byte, n)
+	if _, err := rand.Reader.Read(rv); err != nil {
+		panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(rv)
 }

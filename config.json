@@ -10,7 +10,6 @@
 	"gatewayUrl": "http://kong:8000",
 	"gatewayAdminUrl": "http://kong:8001",
 	"systemKey": "/run/secrets/system",
-	"verificationURL": "http://kong:8000/users",
 	"services": {
 		"user-microservice": "http://kong:8000/users",
 		"microservice-user-profile": "http://kong:8000/profiles"
@@ -21,5 +20,11 @@
 		"user": "fake@email.com",
 		"password": "password",
 		"email": "dev@jormungandr.org"
+	},
+	"rabbitmq": {
+		"username": "guest",
+		"password": "guest",
+		"host": "rabbitmq",
+		"port": "5672"
 	}
 }

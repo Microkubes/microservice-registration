@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.2.0-dirty
+// --version=v1.3.0
 
 package cli
 
@@ -67,7 +67,8 @@ Payload example:
       "Placeat reprehenderit similique quo.",
       "Placeat reprehenderit similique quo.",
       "Placeat reprehenderit similique quo."
-   ]
+   ],
+   "token": "Nostrum consequatur."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}

@@ -183,6 +183,12 @@ Here's an example of a JSON configuration file:
 		"port": "587",
 		"user": "user-mail",
 		"password": "password"
+	},
+	"rabbitmq": {
+		"username": "guest",
+		"password": "guest",
+		"host": "rabbitmq",
+		"port": "5672"
 	}
 }
 ```
@@ -200,3 +206,4 @@ Configuration properties:
  * **verificationURL** -  client verification url (format <url>/userID/verify )
  * **services** - holds the urls of the microservices
  * **mail** - holds mail settings
+ * **rabbitmq** - holds info about RabbitMQ server

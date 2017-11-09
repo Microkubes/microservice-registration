@@ -27,9 +27,6 @@ type Config struct {
 	// SystemKey holds the path to the system key which is provate RSA key
 	SystemKey string `json:"systemKey"`
 
-	// VerificationURL contains the url to the verification action
-	VerificationURL string `json:"verificationURL"`
-
 	// Services is a map of <service-name>:<service base URL>. For example,w
 	// "user-microservice": "http://kong.gateway:8001/user"
 	Services map[string]string `json:"services"`
@@ -37,6 +34,9 @@ type Config struct {
 	// Mail is a map of <property>:<value>. For example,
 	// "host": "smtp.example.com"
 	Mail map[string]string `json:"mail"`
+
+	// RabbitMQ holds information about the rabbitmq server
+	RabbitMQ map[string]string `json:"rabbitmq"`
 }
 
 // LoadConfig loads a Config from a configuration JSON file.
