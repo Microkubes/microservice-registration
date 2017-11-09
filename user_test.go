@@ -18,6 +18,7 @@ import (
 	"github.com/JormungandrK/microservice-registration/app"
 	"github.com/JormungandrK/microservice-registration/app/test"
 	"github.com/JormungandrK/microservice-registration/config"
+	"github.com/JormungandrK/microservice-tools/rabbitmq"
 	"github.com/goadesign/goa"
 )
 
@@ -51,7 +52,7 @@ var _ = json.Unmarshal(configBytes, cfg)
 
 var (
 	service = goa.New("user-test")
-	ctrl    = NewUserController(service, &MockMessage{}, cfg)
+	ctrl    = NewUserController(service, cfg, &rabbitmq.MockAMQPChannel{})
 )
 
 // Call generated test helper, this checks that the returned media type is of the

@@ -28,7 +28,13 @@ func TestLoadConfig(t *testing.T) {
 			"port": "587",
 			"user": "user_email",
 			"password": "password"
-	    }
+	    },
+		"rabbitmq": {
+			"username": "guest",
+			"password": "guest",
+			"host": "rabbitmq",
+			"port": "5672"
+		}
 	  }`
 
 	cnfFile, err := ioutil.TempFile("", "tmp-config")
