@@ -82,11 +82,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-output:
 		createUserResp = out
 	case respErr := <-errorsChan:
-		err = respErr
-	}
-
-	if err != nil {
-		return ctx.InternalServerError(goa.ErrInternal(err))
+		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err := ioutil.ReadAll(createUserResp.Body)
@@ -137,7 +133,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-upOutput:
 		createUpResp = out
 	case respErr := <-upErrorChan:
-		err = respErr
+		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err = ioutil.ReadAll(createUpResp.Body)
