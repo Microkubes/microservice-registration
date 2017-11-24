@@ -62,7 +62,10 @@ func main() {
 	c2 := NewUserController(
 		service,
 		cfg,
-		&rabbitmq.AMQPChannel{channelRabbitMQ},
+		&rabbitmq.AMQPChannel{
+			Channel: channelRabbitMQ,
+		},
+		&http.Client{},
 	)
 	app.MountUserController(service, c2)
 

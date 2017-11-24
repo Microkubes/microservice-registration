@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.3.0
+// --version=v1.2.0-dirty
 
 package client
 
@@ -35,6 +35,49 @@ func (c *Client) RegisterUser(ctx context.Context, path string, payload *UserPay
 
 // NewRegisterUserRequest create the request corresponding to the register action endpoint of the user resource.
 func (c *Client) NewRegisterUserRequest(ctx context.Context, path string, payload *UserPayload, contentType string) (*http.Request, error) {
+	var body bytes.Buffer
+	if contentType == "" {
+		contentType = "*/*" // Use default encoder
+	}
+	err := c.Encoder.Encode(payload, &body, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode body: %s", err)
+	}
+	scheme := c.Scheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
+	req, err := http.NewRequest("POST", u.String(), &body)
+	if err != nil {
+		return nil, err
+	}
+	header := req.Header
+	if contentType == "*/*" {
+		header.Set("Content-Type", "application/json")
+	} else {
+		header.Set("Content-Type", contentType)
+	}
+	return req, nil
+}
+
+// ResendVerificationUserPath computes a request path to the resendVerification action of user.
+func ResendVerificationUserPath() string {
+
+	return fmt.Sprintf("/users/register/resend-verification")
+}
+
+// Resends verification email and resets valiation tokens
+func (c *Client) ResendVerificationUser(ctx context.Context, path string, payload *ResendVerificationPayload, contentType string) (*http.Response, error) {
+	req, err := c.NewResendVerificationUserRequest(ctx, path, payload, contentType)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(ctx, req)
+}
+
+// NewResendVerificationUserRequest create the request corresponding to the resendVerification action endpoint of the user resource.
+func (c *Client) NewResendVerificationUserRequest(ctx context.Context, path string, payload *ResendVerificationPayload, contentType string) (*http.Request, error) {
 	var body bytes.Buffer
 	if contentType == "" {
 		contentType = "*/*" // Use default encoder

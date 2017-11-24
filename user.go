@@ -26,6 +26,7 @@ type UserController struct {
 	*goa.Controller
 	Config          *config.Config
 	ChannelRabbitMQ rabbitmq.Channel
+	Client          *http.Client
 }
 
 // Email holds info for the email template
@@ -43,11 +44,12 @@ type UserProfile struct {
 }
 
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service, config *config.Config, channelRabbitMQ rabbitmq.Channel) *UserController {
+func NewUserController(service *goa.Service, config *config.Config, channelRabbitMQ rabbitmq.Channel, client *http.Client) *UserController {
 	return &UserController{
 		Controller:      service.NewController("UserController"),
 		Config:          config,
 		ChannelRabbitMQ: channelRabbitMQ,
+		Client:          client,
 	}
 }
 
@@ -56,7 +58,6 @@ func NewUserController(service *goa.Service, config *config.Config, channelRabbi
 // varification mail to the user.
 func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	user := &app.Users{}
-	client := &http.Client{}
 
 	token := generateToken(42)
 	ctx.Payload.Token = &token
@@ -69,7 +70,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 	output := make(chan *http.Response, 1)
 	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
-		resp, err := makeRequest(client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
+		resp, err := makeRequest(c.Client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
 		if err != nil {
 			return err
 		}
@@ -120,7 +121,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 	upOutput := make(chan *http.Response, 1)
 	upErrorChan := hystrix.Go("user-microservice.update_user_profile", func() error {
-		resp, errUserProfile := makeRequest(client, http.MethodPut, jsonUseProfile, fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], user.ID), c.Config)
+		resp, errUserProfile := makeRequest(c.Client, http.MethodPut, jsonUseProfile, fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], user.ID), c.Config)
 		if errUserProfile != nil {
 			return errUserProfile
 		}
@@ -170,6 +171,167 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	return ctx.Created(user)
+}
+
+func (c *UserController) ResendVerification(ctx *app.ResendVerificationUserContext) error {
+	// 1. Reset user token
+	userID, token, err := c.resetVerificationToken(ctx.Payload.Email)
+	if err != nil {
+		if restErr, ok := err.(*RestClientError); ok {
+			switch restErr.Code {
+			case 404:
+				return ctx.BadRequest(fmt.Errorf("unknown email"))
+			case 400:
+				return ctx.BadRequest(err)
+			default:
+				return ctx.InternalServerError(err)
+			}
+		}
+		return ctx.InternalServerError(err)
+	}
+	// 2. Fetch user profile
+	profile, err := c.fetchUserProfile(userID)
+	if err != nil {
+		if restErr, ok := err.(*RestClientError); ok {
+			switch restErr.Code {
+			case 404:
+				profile = &UserProfile{
+					Fullname: userID,
+				}
+			case 400:
+				return ctx.BadRequest(err)
+			default:
+				return ctx.InternalServerError(err)
+			}
+		}
+		return ctx.InternalServerError(err)
+	}
+	// 3. Schedule send mail
+	if err = c.scheduleSendVerificationMail(userID, profile, token); err != nil {
+		return ctx.InternalServerError(err)
+	}
+
+	return ctx.OK([]byte{})
+}
+
+func (c *UserController) resetVerificationToken(email string) (userID, token string, err error) {
+	resetTokenPayload, err := json.Marshal(map[string]string{
+		"email": email,
+	})
+	if err != nil {
+		return "", "", err
+	}
+	resetTokenURL := fmt.Sprintf("%s/verification/reset", c.Config.Services["user-microservice"])
+	var resetResponse *http.Response
+	hystErr := hystrix.Do("user-microservice.reset_verification", func() error {
+		resp, e := makeRequest(c.Client, "POST", resetTokenPayload, resetTokenURL, c.Config)
+		if e != nil {
+			return e
+		}
+		resetResponse = resp
+		if resp.StatusCode != 200 {
+			return extractErrorMessage(resp)
+		}
+		return nil
+	}, nil)
+
+	if hystErr != nil {
+		return "", "", hystErr
+	}
+
+	respData, err := ioutil.ReadAll(resetResponse.Body)
+	if err != nil {
+		return "", "", err
+	}
+	tokenResponse := map[string]string{}
+	if err = json.Unmarshal(respData, &tokenResponse); err != nil {
+		return "", "", err
+	}
+	return tokenResponse["id"], tokenResponse["token"], nil
+}
+
+func (c *UserController) fetchUserProfile(userID string) (profile *UserProfile, err error) {
+	fetchUserProfileURL := fmt.Sprintf("%s/%s", c.Config.Services["microservice-user-profile"], userID)
+	var fetchProfileResp *http.Response
+	hystErr := hystrix.Do("user-profile.get_user_profile", func() error {
+		resp, e := makeRequest(c.Client, "GET", nil, fetchUserProfileURL, c.Config)
+		if e != nil {
+			return e
+		}
+		fetchProfileResp = resp
+		if resp.StatusCode != 200 {
+			return extractErrorMessage(resp)
+		}
+		return nil
+	}, nil)
+
+	if hystErr != nil {
+		return nil, hystErr
+	}
+	bodyData, err := ioutil.ReadAll(fetchProfileResp.Body)
+	if err != nil {
+		return nil, err
+	}
+	profile = &UserProfile{}
+	if err := json.Unmarshal(bodyData, &profile); err != nil {
+		return nil, err
+	}
+	return profile, nil
+}
+
+func (c *UserController) scheduleSendVerificationMail(userID string, profile *UserProfile, token string) error {
+	emailInfo := Email{
+		Email: profile.Email,
+		ID:    userID,
+		Name:  profile.Fullname,
+		Token: token,
+	}
+
+	body, err := json.Marshal(&emailInfo)
+	if err != nil {
+		return err
+	}
+
+	if err = c.ChannelRabbitMQ.Send("verification-email", body); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func extractErrorMessage(resp *http.Response) error {
+	if resp == nil || resp.Body == nil {
+		return &RestClientError{
+			Message: "no error in response",
+		}
+	}
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return &RestClientError{
+			Code:    -1,
+			Message: fmt.Sprintf("IO Error on response read: %s", err.Error()),
+		}
+	}
+	result := map[string]interface{}{}
+	if err = json.Unmarshal(data, &result); err != nil {
+		return &RestClientError{
+			Code:    -1,
+			Message: fmt.Sprintf("JSON Unmarshal error: %s", err.Error()),
+		}
+	}
+	if _, ok := result["message"]; ok {
+		if message, ok := result["message"].(string); ok {
+			return &RestClientError{
+				Code:       resp.StatusCode,
+				StatusLine: resp.Status,
+				Message:    message,
+			}
+		}
+	}
+	return &RestClientError{
+		Code:    -1,
+		Message: "Unable to get error from response. Maybe not JSON response?",
+	}
 }
 
 // makeRequest makes http request
@@ -232,4 +394,15 @@ func generateToken(n int) string {
 		panic(err)
 	}
 	return base64.URLEncoding.EncodeToString(rv)
+}
+
+// RestClientError represents an error that occured in a REST call to a remote API.
+type RestClientError struct {
+	Code       int
+	StatusLine string
+	Message    string
+}
+
+func (e *RestClientError) Error() string {
+	return fmt.Sprintf("%d %s %s", e.Code, e.StatusLine, e.Message)
 }

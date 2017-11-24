@@ -4,6 +4,19 @@ consumes:
 - application/gob
 - application/x-gob
 definitions:
+  ResendVerificationPayload:
+    description: Payload for resending email verification. Contains user email
+    example:
+      email: Dicta facere.
+    properties:
+      email:
+        description: User email for verification
+        example: Dicta facere.
+        type: string
+    required:
+    - email
+    title: ResendVerificationPayload
+    type: object
   UserPayload:
     description: UserPayload
     example:
@@ -206,6 +219,7 @@ paths:
       produces:
       - application/vnd.goa.error
       - application/vnd.goa.user+json
+      - application/vnd.goa.error
       responses:
         "201":
           description: Created
@@ -224,11 +238,45 @@ paths:
       summary: register user
       tags:
       - user
+  /users/register/resend-verification:
+    post:
+      description: Resends verification email and resets valiation tokens
+      operationId: user#resendVerification
+      parameters:
+      - description: Payload for resending email verification. Contains user email
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/ResendVerificationPayload'
+      produces:
+      - application/vnd.goa.error
+      - application/vnd.goa.error
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: resendVerification user
+      tags:
+      - user
 produces:
 - application/json
 - application/xml
 - application/gob
 - application/x-gob
+responses:
+  OK:
+    description: OK
 schemes:
 - http
 swagger: "2.0"

@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.3.0
+// --version=v1.2.0-dirty
 
 package app
 
@@ -59,6 +59,7 @@ func MountSwaggerController(service *goa.Service, ctrl SwaggerController) {
 type UserController interface {
 	goa.Muxer
 	Register(*RegisterUserContext) error
+	ResendVerification(*ResendVerificationUserContext) error
 }
 
 // MountUserController "mounts" a User resource controller on the given service.
@@ -86,6 +87,27 @@ func MountUserController(service *goa.Service, ctrl UserController) {
 	}
 	service.Mux.Handle("POST", "/users/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
 	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /users/register")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewResendVerificationUserContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*ResendVerificationPayload)
+		} else {
+			return goa.MissingPayloadError()
+		}
+		return ctrl.ResendVerification(rctx)
+	}
+	service.Mux.Handle("POST", "/users/register/resend-verification", ctrl.MuxHandler("resendVerification", h, unmarshalResendVerificationUserPayload))
+	service.LogInfo("mount", "ctrl", "User", "action", "ResendVerification", "route", "POST /users/register/resend-verification")
 }
 
 // unmarshalRegisterUserPayload unmarshals the request body into the context request data Payload field.
@@ -95,6 +117,21 @@ func unmarshalRegisterUserPayload(ctx context.Context, service *goa.Service, req
 		return err
 	}
 	payload.Finalize()
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
+}
+
+// unmarshalResendVerificationUserPayload unmarshals the request body into the context request data Payload field.
+func unmarshalResendVerificationUserPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &resendVerificationPayload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
 	if err := payload.Validate(); err != nil {
 		// Initialize payload with private data structure so it can be logged
 		goa.ContextRequest(ctx).Payload = payload

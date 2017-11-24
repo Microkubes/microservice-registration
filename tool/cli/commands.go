@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.3.0
+// --version=v1.2.0-dirty
 
 package cli
 
@@ -30,6 +30,13 @@ import (
 type (
 	// RegisterUserCommand is the command line data structure for the register action of user
 	RegisterUserCommand struct {
+		Payload     string
+		ContentType string
+		PrettyPrint bool
+	}
+
+	// ResendVerificationUserCommand is the command line data structure for the resendVerification action of user
+	ResendVerificationUserCommand struct {
 		Payload     string
 		ContentType string
 		PrettyPrint bool
@@ -74,6 +81,27 @@ Payload example:
 	}
 	tmp1.RegisterFlags(sub, c)
 	sub.PersistentFlags().BoolVar(&tmp1.PrettyPrint, "pp", false, "Pretty print response body")
+	command.AddCommand(sub)
+	app.AddCommand(command)
+	command = &cobra.Command{
+		Use:   "resend-verification",
+		Short: `Resends verification email and resets valiation tokens`,
+	}
+	tmp2 := new(ResendVerificationUserCommand)
+	sub = &cobra.Command{
+		Use:   `user ["/users/register/resend-verification"]`,
+		Short: ``,
+		Long: `
+
+Payload example:
+
+{
+   "email": "Dicta facere."
+}`,
+		RunE: func(cmd *cobra.Command, args []string) error { return tmp2.Run(c, args) },
+	}
+	tmp2.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp2.PrettyPrint, "pp", false, "Pretty print response body")
 	command.AddCommand(sub)
 	app.AddCommand(command)
 
@@ -318,6 +346,39 @@ func (cmd *RegisterUserCommand) Run(c *client.Client, args []string) error {
 
 // RegisterFlags registers the command flags with the command line.
 func (cmd *RegisterUserCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	cc.Flags().StringVar(&cmd.Payload, "payload", "", "Request body encoded in JSON")
+	cc.Flags().StringVar(&cmd.ContentType, "content", "", "Request content type override, e.g. 'application/x-www-form-urlencoded'")
+}
+
+// Run makes the HTTP request corresponding to the ResendVerificationUserCommand command.
+func (cmd *ResendVerificationUserCommand) Run(c *client.Client, args []string) error {
+	var path string
+	if len(args) > 0 {
+		path = args[0]
+	} else {
+		path = "/users/register/resend-verification"
+	}
+	var payload client.ResendVerificationPayload
+	if cmd.Payload != "" {
+		err := json.Unmarshal([]byte(cmd.Payload), &payload)
+		if err != nil {
+			return fmt.Errorf("failed to deserialize payload: %s", err)
+		}
+	}
+	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
+	ctx := goa.WithLogger(context.Background(), logger)
+	resp, err := c.ResendVerificationUser(ctx, path, &payload, cmd.ContentType)
+	if err != nil {
+		goa.LogError(ctx, "failed", "err", err)
+		return err
+	}
+
+	goaclient.HandleResponse(c.Client, resp, cmd.PrettyPrint)
+	return nil
+}
+
+// RegisterFlags registers the command flags with the command line.
+func (cmd *ResendVerificationUserCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
 	cc.Flags().StringVar(&cmd.Payload, "payload", "", "Request body encoded in JSON")
 	cc.Flags().StringVar(&cmd.ContentType, "content", "", "Request content type override, e.g. 'application/x-www-form-urlencoded'")
 }

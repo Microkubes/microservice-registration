@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.3.0
+// --version=v1.2.0-dirty
 
 package app
 
@@ -14,6 +14,43 @@ import (
 	"github.com/goadesign/goa"
 	"unicode/utf8"
 )
+
+// Payload for resending email verification. Contains user email
+type resendVerificationPayload struct {
+	// User email for verification
+	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
+}
+
+// Validate validates the resendVerificationPayload type instance.
+func (ut *resendVerificationPayload) Validate() (err error) {
+	if ut.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "email"))
+	}
+	return
+}
+
+// Publicize creates ResendVerificationPayload from resendVerificationPayload
+func (ut *resendVerificationPayload) Publicize() *ResendVerificationPayload {
+	var pub ResendVerificationPayload
+	if ut.Email != nil {
+		pub.Email = *ut.Email
+	}
+	return &pub
+}
+
+// Payload for resending email verification. Contains user email
+type ResendVerificationPayload struct {
+	// User email for verification
+	Email string `form:"email" json:"email" xml:"email"`
+}
+
+// Validate validates the ResendVerificationPayload type instance.
+func (ut *ResendVerificationPayload) Validate() (err error) {
+	if ut.Email == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "email"))
+	}
+	return
+}
 
 // UserPayload
 type userPayload struct {
