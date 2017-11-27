@@ -70,9 +70,9 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 	output := make(chan *http.Response, 1)
 	errorsChan := hystrix.Go("user-microservice.create_user", func() error {
-		resp, err := makeRequest(c.Client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
-		if err != nil {
-			return err
+		resp, e := makeRequest(c.Client, http.MethodPost, jsonUser, c.Config.Services["user-microservice"], c.Config)
+		if e != nil {
+			return e
 		}
 		output <- resp
 		return nil
@@ -173,6 +173,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	return ctx.Created(user)
 }
 
+// ResendVerification resets the activation token and resends activation emal to user.
 func (c *UserController) ResendVerification(ctx *app.ResendVerificationUserContext) error {
 	// 1. Reset user token
 	userID, token, err := c.resetVerificationToken(ctx.Payload.Email)
