@@ -52,23 +52,25 @@ var _ = json.Unmarshal(configBytes, cfg)
 
 var (
 	service = goa.New("user-test")
-	ctrl    = NewUserController(service, cfg, &rabbitmq.MockAMQPChannel{})
+	ctrl    = NewUserController(service, cfg, &rabbitmq.MockAMQPChannel{}, &http.Client{})
 )
 
-// Call generated test helper, this checks that the returned media type is of the
-// correct type (i.e. uses view "default") and validates the media type.
-// Also, it ckecks the returned status code
-func TestRegisterUserCreated(t *testing.T) {
-	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
+func TestMain(m *testing.M) {
+	privkey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	bytes := x509.MarshalPKCS1PrivateKey(privkey)
 	privateBytes := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: bytes,
 	})
 	ioutil.WriteFile("system", privateBytes, 0644)
-
 	defer os.Remove("system")
+	m.Run()
+}
 
+// Call generated test helper, this checks that the returned media type is of the
+// correct type (i.e. uses view "default") and validates the media type.
+// Also, it ckecks the returned status code
+func TestRegisterUserCreated(t *testing.T) {
 	pass := "password"
 	extID := "qwerc461f9f8eb02aae053f3"
 	user := &app.UserPayload{
@@ -99,6 +101,7 @@ func TestRegisterUserCreated(t *testing.T) {
 			"email":    user.Email,
 		})
 
+	gock.InterceptClient(ctrl.Client)
 	_, u := test.RegisterUserCreated(t, context.Background(), service, ctrl, user)
 
 	if u == nil {
@@ -137,7 +140,7 @@ func TestRegisterUserInternalServerError(t *testing.T) {
 			"fullname": user.Fullname,
 			"email":    user.Email,
 		})
-
+	gock.InterceptClient(ctrl.Client)
 	test.RegisterUserInternalServerError(t, context.Background(), service, ctrl, user)
 }
 
@@ -174,20 +177,11 @@ func TestRegisterUserBadRequest(t *testing.T) {
 			"fullname": user.Fullname,
 			"email":    user.Email,
 		})
-
+	gock.InterceptClient(ctrl.Client)
 	test.RegisterUserBadRequest(t, context.Background(), service, ctrl, user)
 }
 
 func TestMakeRequest(t *testing.T) {
-	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
-	bytes := x509.MarshalPKCS1PrivateKey(privkey)
-	privateBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: bytes,
-	})
-	ioutil.WriteFile("system", privateBytes, 0644)
-
-	defer os.Remove("system")
 
 	payload := []byte(`{
 	    "data": "something"
@@ -198,6 +192,7 @@ func TestMakeRequest(t *testing.T) {
 		Post("/users").
 		Reply(201)
 
+	gock.InterceptClient(client)
 	resp, err := makeRequest(client, http.MethodPost, payload, "http://test.com/users", cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -208,15 +203,6 @@ func TestMakeRequest(t *testing.T) {
 }
 
 func TestSelfSignJWT(t *testing.T) {
-	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
-	bytes := x509.MarshalPKCS1PrivateKey(privkey)
-	privateBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: bytes,
-	})
-	ioutil.WriteFile("system", privateBytes, 0644)
-
-	defer os.Remove("system")
 
 	token, err := selfSignJWT(cfg)
 	if err != nil {
@@ -226,4 +212,83 @@ func TestSelfSignJWT(t *testing.T) {
 	if token == "" {
 		t.Fatal("Empty JWT token")
 	}
+}
+
+func TestResenVerification_OK(t *testing.T) {
+	gock.Off()
+
+	gock.New("http://kong:8000").
+		Post("/users/verification/reset").
+		JSON(map[string]interface{}{
+			"email": "email@example.com",
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"id":    "user-id",
+			"email": "email@example.com",
+			"token": "verification_token_reset",
+		})
+
+	gock.New("http://kong:8000").
+		Get("/profiles/user-id").
+		Reply(200).JSON(map[string]interface{}{
+		"userId":   "user-id",
+		"email":    "email@example.com",
+		"fullName": "Test User",
+	})
+
+	gock.InterceptClient(ctrl.Client)
+	payload := &app.ResendVerificationPayload{
+		Email: "email@example.com",
+	}
+	test.ResendVerificationUserOK(t, context.Background(), service, ctrl, payload)
+}
+
+func TestResendVerification_BadRequest(t *testing.T) {
+	gock.Off()
+	gock.New("http://kong:8000").
+		Post("/users/verification/reset").
+		JSON(map[string]interface{}{
+			"email": "email@example.com",
+		}).
+		Reply(400).
+		JSON(map[string]interface{}{
+			"id":      "XYZ_REQ_ID",
+			"message": "already activated",
+		})
+
+	gock.InterceptClient(ctrl.Client)
+
+	test.ResendVerificationUserBadRequest(t, context.Background(), service, ctrl, &app.ResendVerificationPayload{
+		Email: "email@example.com",
+	})
+}
+
+func TestResenVerification_InternalServerError(t *testing.T) {
+	gock.Off()
+
+	gock.New("http://kong:8000").
+		Post("/users/verification/reset").
+		JSON(map[string]interface{}{
+			"email": "email@example.com",
+		}).
+		Reply(200).
+		JSON(map[string]interface{}{
+			"id":    "user-id",
+			"email": "email@example.com",
+			"token": "verification_token_reset",
+		})
+
+	gock.New("http://kong:8000").
+		Get("/profiles/user-id").
+		Reply(500).
+		JSON(map[string]interface{}{
+			"id":      "XYZ_2_REQ_ID",
+			"message": "unknown internal error",
+		})
+	gock.InterceptClient(ctrl.Client)
+
+	test.ResendVerificationUserInternalServerError(t, context.Background(), service, ctrl, &app.ResendVerificationPayload{
+		Email: "email@example.com",
+	})
 }

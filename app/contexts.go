@@ -6,7 +6,7 @@
 // $ goagen
 // --design=github.com/JormungandrK/microservice-registration/design
 // --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
-// --version=v1.3.0
+// --version=v1.2.0-dirty
 
 package app
 
@@ -50,6 +50,46 @@ func (ctx *RegisterUserContext) BadRequest(r error) error {
 
 // InternalServerError sends a HTTP response with status code 500.
 func (ctx *RegisterUserContext) InternalServerError(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// ResendVerificationUserContext provides the user resendVerification action context.
+type ResendVerificationUserContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	Payload *ResendVerificationPayload
+}
+
+// NewResendVerificationUserContext parses the incoming request URL and body, performs validations and creates the
+// context used by the user controller resendVerification action.
+func NewResendVerificationUserContext(ctx context.Context, r *http.Request, service *goa.Service) (*ResendVerificationUserContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ResendVerificationUserContext{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ResendVerificationUserContext) OK(resp []byte) error {
+	ctx.ResponseData.Header().Set("Content-Type", "text/plain")
+	ctx.ResponseData.WriteHeader(200)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *ResendVerificationUserContext) BadRequest(r error) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *ResendVerificationUserContext) InternalServerError(r error) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }

@@ -18,7 +18,6 @@ var _ = API("user", func() {
 // Resources group related API endpoints together.
 var _ = Resource("user", func() {
 	BasePath("users")
-	DefaultMedia(UserMedia)
 
 	// Actions define a single API endpoint
 	Action("register", func() {
@@ -29,6 +28,16 @@ var _ = Resource("user", func() {
 		Response(BadRequest, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
+
+	Action("resendVerification", func() {
+		Description("Resends verification email and resets valiation tokens")
+		Routing(POST("/register/resend-verification"))
+		Payload(ResendVerificationPayload)
+		Response(OK)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
+
 })
 
 // UserMedia defines the media type used to render user.
@@ -78,6 +87,13 @@ var UserPayload = Type("UserPayload", func() {
 	Attribute("token", String, "Email verification token")
 
 	Required("fullname", "email")
+})
+
+// ResendVerificationPayload contains the email for the user to reset verification.
+var ResendVerificationPayload = Type("ResendVerificationPayload", func() {
+	Description("Payload for resending email verification. Contains user email")
+	Attribute("email", String, "User email for verification")
+	Required("email")
 })
 
 // Swagger UI
