@@ -371,10 +371,15 @@ func selfSignJWT(cfg *config.Config) (string, error) {
 		return "", err
 	}
 
+	randUUID, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
 	claims := jwtgo.MapClaims{
 		"iss":      "microservice-registration",
 		"exp":      time.Now().Add(time.Duration(30) * time.Second).Unix(),
-		"jti":      uuid.NewV4().String(),
+		"jti":      randUUID.String(),
 		"nbf":      0,
 		"sub":      "microservice-registration",
 		"scope":    "api:read",
