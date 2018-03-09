@@ -5,7 +5,7 @@ COPY . /go/src/github.com/JormungandrK/microservice-registration
 RUN go install github.com/JormungandrK/microservice-registration
 
 ### Main
-FROM alpine:3.6
+FROM alpine:3.7
 
 RUN apk --no-cache add ca-certificates
 
