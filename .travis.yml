@@ -18,7 +18,7 @@ before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/AlekSi/gocov-xml
   - go get github.com/goadesign/goa/...
-  - go get github.com/JormungandrK/microservice-tools/...
+  - go get github.com/Microkubes/microservice-tools/...
   - go get gopkg.in/h2non/gock.v1
   - go get github.com/afex/hystrix-go/hystrix
 
@@ -27,7 +27,7 @@ before_script:
   - chmod +x ./cc-test-reporter
 
 script:
-  - gocov test github.com/JormungandrK/microservice-registration/... | gocov-xml > coverage.xml && ./cc-test-reporter format-coverage -t cobertura -o coverage.json coverage.xml
+  - gocov test github.com/Microkubes/microservice-registration/... | gocov-xml > coverage.xml && ./cc-test-reporter format-coverage -t cobertura -o coverage.json coverage.xml
   - if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRIGGER" != "yes" ]; then
     ./cc-test-reporter upload-coverage -i coverage.json;
     fi

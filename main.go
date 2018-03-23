@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/JormungandrK/microservice-registration/app"
-	"github.com/JormungandrK/microservice-registration/config"
-	"github.com/JormungandrK/microservice-tools/gateway"
-	"github.com/JormungandrK/microservice-tools/rabbitmq"
+	"github.com/Microkubes/microservice-registration/app"
+	"github.com/Microkubes/microservice-registration/config"
+	"github.com/Microkubes/microservice-tools/gateway"
+	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )

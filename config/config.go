@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/JormungandrK/microservice-tools/gateway"
+	"github.com/Microkubes/microservice-tools/gateway"
 
-	commonconf "github.com/JormungandrK/microservice-tools/config"
+	commonconf "github.com/Microkubes/microservice-tools/config"
 )
 
 // Config holds the microservice full configuration.

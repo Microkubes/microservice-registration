@@ -1,7 +1,7 @@
 User Registration Microservice
 ==============================
 
-[![Build](https://travis-ci.com/JormungandrK/microservice-registration.svg?token=UB5yzsLHNSbtjSYrGbWf&branch=master)](https://travis-ci.com/JormungandrK/microservice-registration)
+[![Build](https://travis-ci.com/Microkubes/microservice-registration.svg?token=UB5yzsLHNSbtjSYrGbWf&branch=master)](https://travis-ci.com/Microkubes/microservice-registration)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/a30f92c1b70b692e6484/test_coverage)](https://codeclimate.com/repos/59e7705a9c7963028d001870/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a30f92c1b70b692e6484/maintainability)](https://codeclimate.com/repos/59e7705a9c7963028d001870/maintainability)
 
@@ -21,14 +21,14 @@ go get -u github.com/goadesign/goa/...
 Clone the repo:
 ```
 cd $GOPATH/src
-git clone https://github.com/JormungandrK/microservice-registration.git /path/to/project-workspace/src/github.com/JormungandrK/microservice-registration
+git clone https://github.com/Microkubes/microservice-registration.git /path/to/project-workspace/src/github.com/Microkubes/microservice-registration
 ```
 Be sure to use the full domain name and resource path here (compatible with ```go get```).
 
 
 Then compile and run:
 ```
-cd /path/to/project-workspace/src/github.com/JormungandrK/microservice-registration
+cd /path/to/project-workspace/src/github.com/Microkubes/microservice-registration
 go build -o registration
 ./registration
 ```
@@ -36,14 +36,14 @@ go build -o registration
 ## Change the design
 If you change the design then you should regenerate the files. Run:
 ```
-cd /path/to/project-workspace/src/github.com/JormungandrK/microservice-registration
+cd /path/to/project-workspace/src/github.com/Microkubes/microservice-registration
 go generate
 ```
 **NOTE:** If the above command does not update the generated code per the changes in the design,
 then run ```goagen bootstrap```:
 
 ```bash
-goagen bootstrap -d github.com/JormungandrK/microservice-registration/design -o .
+goagen bootstrap -d github.com/Microkubes/microservice-registration/design -o .
 ```
 
 
@@ -56,7 +56,7 @@ go build -o registration
 ## Other changes, not related to the design
 For all other changes that are not related to the design just recompile the service and start it again:
 ```
-cd $GOPATH/src/github.com/JormungandrK/microservice-registration
+cd $GOPATH/src/github.com/Microkubes/microservice-registration
 go build -o registration
 ./registration
 ```
@@ -74,9 +74,9 @@ First, create a directory for the shh keys:
 mkdir keys
 ```
 
-Find a key that you'll use to acceess JormungandrK organization on github. Then copy the
+Find a key that you'll use to acceess Microkubes organization on github. Then copy the
 private key to the directory you created above. The build would use this key to
-access ```JormungandrK/microservice-tools``` repository.
+access ```Microkubes/microservice-tools``` repository.
 
 ```bash
 cp ~/.ssh/id_rsa keys/
@@ -107,7 +107,7 @@ docker run microservice-registration
 
 ## Check if the service is self-registering on Kong Gateway
 
-First make sure you have started Kong. See [Jormungandr Infrastructure](https://github.com/JormungandrK/jormungandr-infrastructure)
+First make sure you have started Kong. See [Jormungandr Infrastructure](https://github.com/Microkubes/jormungandr-infrastructure)
 on how to set up Kong locally.
 
 If you have Kong admin endpoint running on http://localhost:8001 , you're good to go.

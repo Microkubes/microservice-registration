@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/JormungandrK/microservice-registration/design
-// --out=$(GOPATH)/src/github.com/JormungandrK/microservice-registration
+// --design=github.com/Microkubes/microservice-registration/design
+// --out=$(GOPATH)/src/github.com/Microkubes/microservice-registration
 // --version=v1.2.0-dirty
 
 package test
@@ -14,7 +14,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/JormungandrK/microservice-registration/app"
+	"github.com/Microkubes/microservice-registration/app"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/goatest"
 	"io"

@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/JormungandrK/microservice-registration/app"
-	"github.com/JormungandrK/microservice-registration/config"
-	"github.com/JormungandrK/microservice-tools/rabbitmq"
+	"github.com/Microkubes/microservice-registration/app"
+	"github.com/Microkubes/microservice-registration/config"
+	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/afex/hystrix-go/hystrix"
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"

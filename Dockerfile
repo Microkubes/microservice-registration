@@ -1,8 +1,8 @@
 ### Multi-stage build
 FROM jormungandrk/goa-build as build
 
-COPY . /go/src/github.com/JormungandrK/microservice-registration
-RUN go install github.com/JormungandrK/microservice-registration
+COPY . /go/src/github.com/Microkubes/microservice-registration
+RUN go install github.com/Microkubes/microservice-registration
 
 ### Main
 FROM alpine:3.7

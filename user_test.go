@@ -15,10 +15,10 @@ import (
 
 	"gopkg.in/h2non/gock.v1"
 
-	"github.com/JormungandrK/microservice-registration/app"
-	"github.com/JormungandrK/microservice-registration/app/test"
-	"github.com/JormungandrK/microservice-registration/config"
-	"github.com/JormungandrK/microservice-tools/rabbitmq"
+	"github.com/Microkubes/microservice-registration/app"
+	"github.com/Microkubes/microservice-registration/app/test"
+	"github.com/Microkubes/microservice-registration/config"
+	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/goadesign/goa"
 )
 
