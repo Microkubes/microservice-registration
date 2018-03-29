@@ -1,9 +1,9 @@
 {
 	"microservice": {
-		"name": "registration-microservice",
+		"name": "microservice-registration",
 		"port": 8080,
 		"paths": ["/users/register"],
-		"virtual_host": "registration.services.jormugandr.org",
+		"virtual_host": "microservice-registration.service.consul",
 		"weight": 10,
 		"slots": 100
 	},
