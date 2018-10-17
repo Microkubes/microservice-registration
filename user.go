@@ -65,6 +65,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	// Create new user from payload
 	jsonUser, err := json.Marshal(ctx.Payload)
 	if err != nil {
+		c.Service.LogError("Register: Failed to deserialize payload", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
@@ -83,11 +84,13 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-output:
 		createUserResp = out
 	case respErr := <-errorsChan:
+		c.Service.LogError("Register: Failed to create user.", "err", respErr.Error())
 		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err := ioutil.ReadAll(createUserResp.Body)
 	if err != nil {
+		c.Service.LogError("Register: Create user returned error response.", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
@@ -96,18 +99,22 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 		err = json.Unmarshal(body, goaErr)
 		if err != nil {
-			ctx.InternalServerError(goa.ErrInternal(err))
+			c.Service.LogError("Register: Failed to deserialize create_user respose", "err", err.Error())
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
 		switch createUserResp.StatusCode {
 		case 400:
+			c.Service.LogError("Register: Received bad request (400) error from user microservice.", "err", goaErr.Error())
 			return ctx.BadRequest(goaErr)
 		case 500:
+			c.Service.LogError("Register: Received internal error (500) error from user microservice.", "err", goaErr.Error())
 			return ctx.InternalServerError(goaErr)
 		}
 	}
 
 	if err = json.Unmarshal(body, &user); err != nil {
+		c.Service.LogError("Register: Deserialization error (create user body)", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
@@ -116,6 +123,7 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	userProfile := UserProfile{user.Fullname, user.Email}
 	jsonUseProfile, err := json.Marshal(userProfile)
 	if err != nil {
+		c.Service.LogError("Register: Serialization error (update user profile body)", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
@@ -134,11 +142,13 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	case out := <-upOutput:
 		createUpResp = out
 	case respErr := <-upErrorChan:
+		c.Service.LogError("Register: Call to update user profile failed.", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(respErr))
 	}
 
 	body, err = ioutil.ReadAll(createUpResp.Body)
 	if err != nil {
+		c.Service.LogError("Register: Failed to read update user profile body.", "err", err.Error())
 		return ctx.InternalServerError(goa.ErrInternal(err))
 	}
 
@@ -147,29 +157,40 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 
 		err = json.Unmarshal(body, goaErr)
 		if err != nil {
-			ctx.InternalServerError(goa.ErrInternal(err))
+			c.Service.LogError("Register: Deserialization error (update user profile body)", "err", err.Error())
+			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
 		switch createUpResp.StatusCode {
 		case 400:
+			c.Service.LogError("Register: Received bad request (400) error from update user profile.", "err", err.Error())
 			return ctx.BadRequest(goaErr)
 		case 500:
+			c.Service.LogError("Register: Received internal error (500) from update user profile.", "err", err.Error())
 			return ctx.InternalServerError(goaErr)
 		}
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		emailInfo := Email{user.ID, user.Fullname, user.Email, token}
+		emailInfo := Email{
+			ID:    user.ID,
+			Name:  user.Fullname,
+			Email: user.Email,
+			Token: token,
+		}
 		body, err := json.Marshal(emailInfo)
+		fmt.Println("EMAIL INFO -> ", string(body))
 		if err != nil {
+			c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
 		if err := c.ChannelRabbitMQ.Send("verification-email", body); err != nil {
+			c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 	}
-
+	c.Service.LogInfo("New user registered.", "id", user.ID)
 	return ctx.Created(user)
 }
 
