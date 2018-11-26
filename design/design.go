@@ -19,6 +19,11 @@ var _ = API("user", func() {
 var _ = Resource("user", func() {
 	BasePath("users")
 
+	// Allow OPTIONS preflight request
+	Origin("*", func() {
+		Methods("OPTIONS")
+	})
+
 	// Actions define a single API endpoint
 	Action("register", func() {
 		Description("Creates user")
