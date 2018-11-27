@@ -7,11 +7,11 @@ definitions:
   ResendVerificationPayload:
     description: Payload for resending email verification. Contains user email
     example:
-      email: Dicta facere.
+      email: Voluptas repellat doloremque aut sed.
     properties:
       email:
         description: User email for verification
-        example: Dicta facere.
+        example: Voluptas repellat doloremque aut sed.
         type: string
     required:
     - email
@@ -21,15 +21,13 @@ definitions:
     description: UserPayload
     example:
       active: true
-      email: brigitte_koepp@ferry.net
-      externalId: Veritatis veniam sed voluptatibus.
+      email: breana@rennerkoepp.com
+      externalId: At consequatur saepe.
       fullname: ApPq
-      password: x75md877qp
+      password: md877qphg
       roles:
-      - Placeat reprehenderit similique quo.
-      - Placeat reprehenderit similique quo.
-      - Placeat reprehenderit similique quo.
-      token: Nostrum consequatur.
+      - Quo quo amet occaecati ut.
+      token: Adipisci dicta facere dolorem distinctio cupiditate.
     properties:
       active:
         default: false
@@ -38,12 +36,12 @@ definitions:
         type: boolean
       email:
         description: Email of user
-        example: brigitte_koepp@ferry.net
+        example: breana@rennerkoepp.com
         format: email
         type: string
       externalId:
         description: External id of user
-        example: Veritatis veniam sed voluptatibus.
+        example: At consequatur saepe.
         type: string
       fullname:
         description: Full name of user
@@ -52,23 +50,21 @@ definitions:
         type: string
       password:
         description: Password of user
-        example: x75md877qp
+        example: md877qphg
         maxLength: 30
         minLength: 6
         type: string
       roles:
         description: Roles of user
         example:
-        - Placeat reprehenderit similique quo.
-        - Placeat reprehenderit similique quo.
-        - Placeat reprehenderit similique quo.
+        - Quo quo amet occaecati ut.
         items:
-          example: Placeat reprehenderit similique quo.
+          example: Quo quo amet occaecati ut.
           type: string
         type: array
       token:
         description: Email verification token
-        example: Nostrum consequatur.
+        example: Adipisci dicta facere dolorem distinctio cupiditate.
         type: string
     required:
     - fullname
@@ -82,7 +78,7 @@ definitions:
       detail: Value of ID must be an integer
       id: 3F1FKVRR
       meta:
-        timestamp: 1.458609e+09
+        timestamp: 1.458609066e+09
       status: "400"
     properties:
       code:
@@ -103,7 +99,7 @@ definitions:
         description: a meta object containing non-standard meta-information about
           the error.
         example:
-          timestamp: 1.458609e+09
+          timestamp: 1.458609066e+09
         type: object
       status:
         description: the HTTP status code applicable to this problem, expressed as
@@ -117,13 +113,13 @@ definitions:
     example:
       active: true
       email: thad@herman.name
-      externalId: Possimus ullam occaecati quae.
+      externalId: Ullam occaecati quae odio rerum aliquid in.
       fullname: dkPRrKW
-      id: Rerum aliquid in sit reprehenderit ea.
+      id: Reprehenderit ea quam optio placeat.
       roles:
-      - Placeat reprehenderit similique quo.
-      - Placeat reprehenderit similique quo.
-      - Placeat reprehenderit similique quo.
+      - Quo quo amet occaecati ut.
+      - Quo quo amet occaecati ut.
+      - Quo quo amet occaecati ut.
     properties:
       active:
         default: false
@@ -137,7 +133,7 @@ definitions:
         type: string
       externalId:
         description: External id of user
-        example: Possimus ullam occaecati quae.
+        example: Ullam occaecati quae odio rerum aliquid in.
         type: string
       fullname:
         description: Full name of user
@@ -146,16 +142,16 @@ definitions:
         type: string
       id:
         description: Unique user ID
-        example: Rerum aliquid in sit reprehenderit ea.
+        example: Reprehenderit ea quam optio placeat.
         type: string
       roles:
         description: Roles of user
         example:
-        - Placeat reprehenderit similique quo.
-        - Placeat reprehenderit similique quo.
-        - Placeat reprehenderit similique quo.
+        - Quo quo amet occaecati ut.
+        - Quo quo amet occaecati ut.
+        - Quo quo amet occaecati ut.
         items:
-          example: Placeat reprehenderit similique quo.
+          example: Quo quo amet occaecati ut.
           type: string
         type: array
     required:
@@ -219,7 +215,6 @@ paths:
       produces:
       - application/vnd.goa.error
       - application/vnd.goa.user+json
-      - application/vnd.goa.error
       responses:
         "201":
           description: Created
@@ -250,7 +245,6 @@ paths:
         schema:
           $ref: '#/definitions/ResendVerificationPayload'
       produces:
-      - application/vnd.goa.error
       - application/vnd.goa.error
       - text/plain
       responses:
