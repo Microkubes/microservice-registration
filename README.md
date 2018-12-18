@@ -207,3 +207,7 @@ Configuration properties:
  * **services** - holds the urls of the microservices
  * **mail** - holds mail settings
  * **rabbitmq** - holds info about RabbitMQ server
+
+ ## Contributing
+
+For contributing to this repository or its documentation, see the [Contributing guidelines](CONTRIBUTING.md).
