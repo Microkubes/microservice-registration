@@ -22,6 +22,7 @@ before_install:
   - go get github.com/Microkubes/microservice-tools/...
   - go get gopkg.in/h2non/gock.v1
   - go get github.com/afex/hystrix-go/hystrix
+  - go get github.com/satori/go.uuid
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
