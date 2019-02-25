@@ -5,7 +5,8 @@ RUN apk --no-cache add git ca-certificates
 
 RUN go get -u -v github.com/goadesign/goa/... && \
     go get -u -v github.com/afex/hystrix-go/hystrix && \
-    go get -u -v github.com/Microkubes/microservice-tools/...
+    go get -u -v github.com/Microkubes/microservice-tools/... && \
+    go get -u -v github.com/satori/go.uuid
 
 COPY . /go/src/github.com/Microkubes/microservice-registration
 
