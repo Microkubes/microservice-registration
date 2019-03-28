@@ -10,6 +10,8 @@ import (
 	"github.com/Microkubes/microservice-registration/config"
 	"github.com/Microkubes/microservice-tools/gateway"
 	"github.com/Microkubes/microservice-tools/rabbitmq"
+	"github.com/Microkubes/microservice-tools/utils"
+	"github.com/Microkubes/microservice-tools/utils/version"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )
@@ -54,6 +56,10 @@ func main() {
 	service.Use(middleware.LogRequest(true))
 	service.Use(middleware.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
+
+	service.Use(healthcheck.NewCheckMiddleware("/healthcheck"))
+
+	service.Use(version.NewVersionMiddleware(cfg.Version, "/version"))
 
 	// Mount "swagger" controller
 	c := NewSwaggerController(service)

@@ -9,6 +9,7 @@
 	},
 	"gatewayUrl": "http://kong:8000",
 	"gatewayAdminUrl": "http://kong-admin:8001",
+	"version": "v1.0.1-beta",
 	"systemKey": "/run/secrets/system",
 	"services": {
 		"user-microservice": "http://kong:8000/users",
