@@ -37,6 +37,9 @@ type Config struct {
 
 	// RabbitMQ holds information about the rabbitmq server
 	RabbitMQ map[string]string `json:"rabbitmq"`
+
+	//Version is version of the service
+	Version string `json:"version"`
 }
 
 // LoadConfig loads a Config from a configuration JSON file.
