@@ -10,7 +10,7 @@ import (
 	"github.com/Microkubes/microservice-registration/config"
 	"github.com/Microkubes/microservice-tools/gateway"
 	"github.com/Microkubes/microservice-tools/rabbitmq"
-	"github.com/Microkubes/microservice-tools/utils"
+	"github.com/Microkubes/microservice-tools/utils/healthcheck"
 	"github.com/Microkubes/microservice-tools/utils/version"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
