@@ -29,12 +29,11 @@ type UserController struct {
 	Client          *http.Client
 }
 
-// Email holds info for the email template
-type Email struct {
-	ID    string `json:"id,omitempty"`
-	Name  string `json:"name,omitempty"`
-	Email string `json:"email,omitempty"`
-	Token string `json:"token,omitempty"`
+// AMQPMessage holds data for "email-queue" AMQP channel
+type AMQPMessage struct {
+	Email        string            `json:"email,omitempty"`
+	Data         map[string]string `json:"data,omitempty"`
+	TemplateName string            `json:"template,omitempty"`
 }
 
 // UserProfile represents User Profle
@@ -172,20 +171,25 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 	}
 
 	if ctx.Payload.ExternalID == nil {
-		emailInfo := Email{
-			ID:    user.ID,
-			Name:  user.Fullname,
-			Email: user.Email,
-			Token: token,
+
+		messageData := map[string]string{
+			"name":  user.Fullname,
+			"token": token,
 		}
-		body, err := json.Marshal(emailInfo)
+		amqpMessage := AMQPMessage{
+			Email:        user.Email,
+			Data:         messageData,
+			TemplateName: "userVerification",
+		}
+
+		body, err := json.Marshal(amqpMessage)
 		fmt.Println("EMAIL INFO -> ", string(body))
 		if err != nil {
 			c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
-		if err := c.ChannelRabbitMQ.Send("verification-email", body); err != nil {
+		if err := c.ChannelRabbitMQ.Send("email-queue", body); err != nil {
 			c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
@@ -302,14 +306,18 @@ func (c *UserController) fetchUserProfile(userID string) (profile *UserProfile, 
 }
 
 func (c *UserController) scheduleSendVerificationMail(userID string, profile *UserProfile, token string) error {
-	emailInfo := Email{
-		Email: profile.Email,
-		ID:    userID,
-		Name:  profile.Fullname,
-		Token: token,
+
+	messageData := map[string]string{
+		"name":  profile.Fullname,
+		"token": token,
+	}
+	amqpMessage := AMQPMessage{
+		Email:        profile.Email,
+		Data:         messageData,
+		TemplateName: "userVerification",
 	}
 
-	body, err := json.Marshal(&emailInfo)
+	body, err := json.Marshal(amqpMessage)
 	if err != nil {
 		return err
 	}
