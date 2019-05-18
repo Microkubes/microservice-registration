@@ -17,7 +17,7 @@ import (
 	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/afex/hystrix-go/hystrix"
 	jwtgo "github.com/dgrijalva/jwt-go"
-	"github.com/goadesign/goa"
+	"github.com/keitaroinc/goa"
 	uuid "github.com/satori/go.uuid"
 )
 

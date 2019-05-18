@@ -12,8 +12,8 @@ import (
 	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/Microkubes/microservice-tools/utils/healthcheck"
 	"github.com/Microkubes/microservice-tools/utils/version"
-	"github.com/goadesign/goa"
-	"github.com/goadesign/goa/middleware"
+	"github.com/keitaroinc/goa"
+	"github.com/keitaroinc/goa/middleware"
 )
 
 func main() {
