@@ -19,7 +19,7 @@ import (
 	"github.com/Microkubes/microservice-registration/app/test"
 	"github.com/Microkubes/microservice-registration/config"
 	"github.com/Microkubes/microservice-tools/rabbitmq"
-	"github.com/goadesign/goa"
+	"github.com/keitaroinc/goa"
 )
 
 var configBytes = []byte(`
