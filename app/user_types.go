@@ -68,6 +68,8 @@ type userPayload struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
 	Roles []string `form:"roles,omitempty" json:"roles,omitempty" yaml:"roles,omitempty" xml:"roles,omitempty"`
+	// Status of user account
+	SendActivationMail *bool `form:"sendActivationMail,omitempty" json:"sendActivationMail,omitempty" yaml:"sendActivationMail,omitempty" xml:"sendActivationMail,omitempty"`
 	// Email verification token
 	Token *string `form:"token,omitempty" json:"token,omitempty" yaml:"token,omitempty" xml:"token,omitempty"`
 }
@@ -77,6 +79,10 @@ func (ut *userPayload) Finalize() {
 	var defaultActive = false
 	if ut.Active == nil {
 		ut.Active = &defaultActive
+	}
+	var defaultSendActivationMail = true
+	if ut.SendActivationMail == nil {
+		ut.SendActivationMail = &defaultSendActivationMail
 	}
 }
 
@@ -135,6 +141,9 @@ func (ut *userPayload) Publicize() *UserPayload {
 	if ut.Roles != nil {
 		pub.Roles = ut.Roles
 	}
+	if ut.SendActivationMail != nil {
+		pub.SendActivationMail = *ut.SendActivationMail
+	}
 	if ut.Token != nil {
 		pub.Token = ut.Token
 	}
@@ -157,6 +166,8 @@ type UserPayload struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
 	Roles []string `form:"roles,omitempty" json:"roles,omitempty" yaml:"roles,omitempty" xml:"roles,omitempty"`
+	// Status of user account
+	SendActivationMail bool `form:"sendActivationMail" json:"sendActivationMail" yaml:"sendActivationMail" xml:"sendActivationMail"`
 	// Email verification token
 	Token *string `form:"token,omitempty" json:"token,omitempty" yaml:"token,omitempty" xml:"token,omitempty"`
 }

@@ -90,6 +90,9 @@ var UserPayload = Type("UserPayload", func() {
 	Attribute("active", Boolean, "Status of user account", func() {
 		Default(false)
 	})
+	Attribute("sendActivationMail", Boolean, "Status of user account", func() {
+		Default(true)
+	})
 	Attribute("token", String, "Email verification token")
 
 	Required("fullname", "email")
