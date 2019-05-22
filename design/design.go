@@ -85,6 +85,7 @@ var UserPayload = Type("UserPayload", func() {
 		MaxLength(30)
 	})
 	Attribute("roles", ArrayOf(String), "Roles of user")
+	Attribute("namespaces", ArrayOf(String), "List of namespaces this user belongs to")
 	Attribute("externalId", String, "External id of user")
 	Attribute("active", Boolean, "Status of user account", func() {
 		Default(false)

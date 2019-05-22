@@ -7,11 +7,11 @@ definitions:
   ResendVerificationPayload:
     description: Payload for resending email verification. Contains user email
     example:
-      email: Voluptas repellat doloremque aut sed.
+      email: Debitis iusto et molestias maxime rem.
     properties:
       email:
         description: User email for verification
-        example: Voluptas repellat doloremque aut sed.
+        example: Debitis iusto et molestias maxime rem.
         type: string
     required:
     - email
@@ -24,10 +24,15 @@ definitions:
       email: breana@rennerkoepp.com
       externalId: At consequatur saepe.
       fullname: ApPq
-      password: md877qphg
+      namespaces:
+      - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+      - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+      - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+      password: 0arnperc
       roles:
       - Quo quo amet occaecati ut.
-      token: Adipisci dicta facere dolorem distinctio cupiditate.
+      - Quo quo amet occaecati ut.
+      token: Repellat doloremque aut sed ut impedit.
     properties:
       active:
         default: false
@@ -48,9 +53,19 @@ definitions:
         example: ApPq
         pattern: ^([a-zA-Z0-9 ]{4,30})$
         type: string
+      namespaces:
+        description: List of namespaces this user belongs to
+        example:
+        - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+        - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+        - Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+        items:
+          example: Repudiandae eaque quia cupiditate cumque quibusdam accusantium.
+          type: string
+        type: array
       password:
         description: Password of user
-        example: md877qphg
+        example: 0arnperc
         maxLength: 30
         minLength: 6
         type: string
@@ -58,13 +73,14 @@ definitions:
         description: Roles of user
         example:
         - Quo quo amet occaecati ut.
+        - Quo quo amet occaecati ut.
         items:
           example: Quo quo amet occaecati ut.
           type: string
         type: array
       token:
         description: Email verification token
-        example: Adipisci dicta facere dolorem distinctio cupiditate.
+        example: Repellat doloremque aut sed ut impedit.
         type: string
     required:
     - fullname
@@ -78,7 +94,7 @@ definitions:
       detail: Value of ID must be an integer
       id: 3F1FKVRR
       meta:
-        timestamp: 1.458609066e+09
+        timestamp: 1458609066
       status: "400"
     properties:
       code:
@@ -99,7 +115,7 @@ definitions:
         description: a meta object containing non-standard meta-information about
           the error.
         example:
-          timestamp: 1.458609066e+09
+          timestamp: 1458609066
         type: object
       status:
         description: the HTTP status code applicable to this problem, expressed as

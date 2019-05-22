@@ -5,7 +5,7 @@
 // Command:
 // $ goagen
 // --design=github.com/Microkubes/microservice-registration/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microservice-registration
+// --out=$(GOPATH)src/github.com/Microkubes/microservice-registration
 // --version=v1.3.1
 
 package cli
@@ -69,11 +69,17 @@ Payload example:
    "email": "breana@rennerkoepp.com",
    "externalId": "At consequatur saepe.",
    "fullname": "ApPq",
-   "password": "md877qphg",
+   "namespaces": [
+      "Repudiandae eaque quia cupiditate cumque quibusdam accusantium.",
+      "Repudiandae eaque quia cupiditate cumque quibusdam accusantium.",
+      "Repudiandae eaque quia cupiditate cumque quibusdam accusantium."
+   ],
+   "password": "0arnperc",
    "roles": [
+      "Quo quo amet occaecati ut.",
       "Quo quo amet occaecati ut."
    ],
-   "token": "Adipisci dicta facere dolorem distinctio cupiditate."
+   "token": "Repellat doloremque aut sed ut impedit."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
@@ -94,7 +100,7 @@ Payload example:
 Payload example:
 
 {
-   "email": "Voluptas repellat doloremque aut sed."
+   "email": "Debitis iusto et molestias maxime rem."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp2.Run(c, args) },
 	}

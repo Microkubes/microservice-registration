@@ -5,7 +5,7 @@
 // Command:
 // $ goagen
 // --design=github.com/Microkubes/microservice-registration/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microservice-registration
+// --out=$(GOPATH)src/github.com/Microkubes/microservice-registration
 // --version=v1.3.1
 
 package app
@@ -62,6 +62,8 @@ type userPayload struct {
 	ExternalID *string `form:"externalId,omitempty" json:"externalId,omitempty" yaml:"externalId,omitempty" xml:"externalId,omitempty"`
 	// Full name of user
 	Fullname *string `form:"fullname,omitempty" json:"fullname,omitempty" yaml:"fullname,omitempty" xml:"fullname,omitempty"`
+	// List of namespaces this user belongs to
+	Namespaces []string `form:"namespaces,omitempty" json:"namespaces,omitempty" yaml:"namespaces,omitempty" xml:"namespaces,omitempty"`
 	// Password of user
 	Password *string `form:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
@@ -124,6 +126,9 @@ func (ut *userPayload) Publicize() *UserPayload {
 	if ut.Fullname != nil {
 		pub.Fullname = *ut.Fullname
 	}
+	if ut.Namespaces != nil {
+		pub.Namespaces = ut.Namespaces
+	}
 	if ut.Password != nil {
 		pub.Password = ut.Password
 	}
@@ -146,6 +151,8 @@ type UserPayload struct {
 	ExternalID *string `form:"externalId,omitempty" json:"externalId,omitempty" yaml:"externalId,omitempty" xml:"externalId,omitempty"`
 	// Full name of user
 	Fullname string `form:"fullname" json:"fullname" yaml:"fullname" xml:"fullname"`
+	// List of namespaces this user belongs to
+	Namespaces []string `form:"namespaces,omitempty" json:"namespaces,omitempty" yaml:"namespaces,omitempty" xml:"namespaces,omitempty"`
 	// Password of user
 	Password *string `form:"password,omitempty" json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
 	// Roles of user
