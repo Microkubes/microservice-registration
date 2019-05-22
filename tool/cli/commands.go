@@ -79,7 +79,8 @@ Payload example:
       "Quo quo amet occaecati ut.",
       "Quo quo amet occaecati ut."
    ],
-   "token": "Repellat doloremque aut sed ut impedit."
+   "sendActivationMail": false,
+   "token": "Doloremque aut sed ut impedit voluptatum debitis."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
@@ -100,7 +101,7 @@ Payload example:
 Payload example:
 
 {
-   "email": "Debitis iusto et molestias maxime rem."
+   "email": "Et molestias maxime rem nemo."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp2.Run(c, args) },
 	}

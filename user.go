@@ -195,9 +195,11 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 			return ctx.InternalServerError(goa.ErrInternal(err))
 		}
 
-		if err := c.ChannelRabbitMQ.Send("email-queue", body); err != nil {
-			c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
-			return ctx.InternalServerError(goa.ErrInternal(err))
+		if ctx.Payload.SendActivationMail {
+			if err := c.ChannelRabbitMQ.Send("email-queue", body); err != nil {
+				c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
+				return ctx.InternalServerError(goa.ErrInternal(err))
+			}
 		}
 	}
 	c.Service.LogInfo("New user registered.", "id", user.ID)

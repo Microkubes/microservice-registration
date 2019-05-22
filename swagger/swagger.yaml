@@ -7,11 +7,11 @@ definitions:
   ResendVerificationPayload:
     description: Payload for resending email verification. Contains user email
     example:
-      email: Debitis iusto et molestias maxime rem.
+      email: Et molestias maxime rem nemo.
     properties:
       email:
         description: User email for verification
-        example: Debitis iusto et molestias maxime rem.
+        example: Et molestias maxime rem nemo.
         type: string
     required:
     - email
@@ -32,7 +32,8 @@ definitions:
       roles:
       - Quo quo amet occaecati ut.
       - Quo quo amet occaecati ut.
-      token: Repellat doloremque aut sed ut impedit.
+      sendActivationMail: false
+      token: Doloremque aut sed ut impedit voluptatum debitis.
     properties:
       active:
         default: false
@@ -78,9 +79,14 @@ definitions:
           example: Quo quo amet occaecati ut.
           type: string
         type: array
+      sendActivationMail:
+        default: true
+        description: Status of user account
+        example: false
+        type: boolean
       token:
         description: Email verification token
-        example: Repellat doloremque aut sed ut impedit.
+        example: Doloremque aut sed ut impedit voluptatum debitis.
         type: string
     required:
     - fullname
