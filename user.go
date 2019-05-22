@@ -44,6 +44,12 @@ type UserProfile struct {
 
 // NewUserController creates a user controller.
 func NewUserController(service *goa.Service, config *config.Config, channelRabbitMQ rabbitmq.Channel, client *http.Client) *UserController {
+	hystrix.ConfigureCommand("user-microservice.create_user", hystrix.CommandConfig{
+		Timeout: 90000,
+	})
+	hystrix.ConfigureCommand("user-microservice.update_user_profile", hystrix.CommandConfig{
+		Timeout: 90000,
+	})
 	return &UserController{
 		Controller:      service.NewController("UserController"),
 		Config:          config,

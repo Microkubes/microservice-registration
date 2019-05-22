@@ -5,7 +5,7 @@
 // Command:
 // $ goagen
 // --design=github.com/Microkubes/microservice-registration/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microservice-registration
+// --out=$(GOPATH)src/github.com/Microkubes/microservice-registration
 // --version=v1.3.1
 
 package test
