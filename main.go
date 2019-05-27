@@ -9,7 +9,6 @@ import (
 	"github.com/Microkubes/microservice-registration/app"
 	"github.com/Microkubes/microservice-registration/config"
 	"github.com/Microkubes/microservice-tools/gateway"
-	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/Microkubes/microservice-tools/utils/healthcheck"
 	"github.com/Microkubes/microservice-tools/utils/version"
 	"github.com/keitaroinc/goa"
@@ -29,19 +28,6 @@ func main() {
 		service.LogError("config", "err", err)
 		panic(err)
 	}
-
-	connRabbitMQ, channelRabbitMQ, err := rabbitmq.Dial(
-		cfg.RabbitMQ["username"],
-		cfg.RabbitMQ["password"],
-		cfg.RabbitMQ["host"],
-		cfg.RabbitMQ["post"],
-	)
-	if err != nil {
-		service.LogError("rabbitmq", "err", err)
-		panic(err)
-	}
-	defer connRabbitMQ.Close()
-	defer channelRabbitMQ.Close()
 
 	registration := gateway.NewKongGateway(cfg.GatewayAdminURL, &http.Client{}, &cfg.Microservice)
 	err = registration.SelfRegister()
@@ -68,9 +54,7 @@ func main() {
 	c2 := NewUserController(
 		service,
 		cfg,
-		&rabbitmq.AMQPChannel{
-			Channel: channelRabbitMQ,
-		},
+		CreateRabbitmqChannel,
 		&http.Client{},
 	)
 	app.MountUserController(service, c2)
