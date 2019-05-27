@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -19,14 +20,16 @@ import (
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/keitaroinc/goa"
 	uuid "github.com/satori/go.uuid"
+	"github.com/streadway/amqp"
 )
 
 // UserController implements the user resource.
 type UserController struct {
 	*goa.Controller
-	Config          *config.Config
-	ChannelRabbitMQ rabbitmq.Channel
-	Client          *http.Client
+	Config            *config.Config
+	ChannelRabbitMQ   rabbitmq.Channel
+	Client            *http.Client
+	createAmqpChannel AmqpChannelFactory
 }
 
 // AMQPMessage holds data for "email-queue" AMQP channel
@@ -42,8 +45,10 @@ type UserProfile struct {
 	Email    string
 }
 
+type AmqpChannelFactory func(*config.Config) (*amqp.Connection, rabbitmq.Channel, error)
+
 // NewUserController creates a user controller.
-func NewUserController(service *goa.Service, config *config.Config, channelRabbitMQ rabbitmq.Channel, client *http.Client) *UserController {
+func NewUserController(service *goa.Service, config *config.Config, amqpFactory AmqpChannelFactory, client *http.Client) *UserController {
 	hystrix.ConfigureCommand("user-microservice.create_user", hystrix.CommandConfig{
 		Timeout: 90000,
 	})
@@ -51,10 +56,10 @@ func NewUserController(service *goa.Service, config *config.Config, channelRabbi
 		Timeout: 90000,
 	})
 	return &UserController{
-		Controller:      service.NewController("UserController"),
-		Config:          config,
-		ChannelRabbitMQ: channelRabbitMQ,
-		Client:          client,
+		Controller:        service.NewController("UserController"),
+		Config:            config,
+		Client:            client,
+		createAmqpChannel: amqpFactory,
 	}
 }
 
@@ -196,7 +201,16 @@ func (c *UserController) Register(ctx *app.RegisterUserContext) error {
 		}
 
 		if ctx.Payload.SendActivationMail {
-			if err := c.ChannelRabbitMQ.Send("email-queue", body); err != nil {
+			amqpConn, amqpChan, err := c.createAmqpChannel(c.Config)
+
+			if err != nil {
+				log.Println("Failed to open connection to queue: ", err.Error())
+				return ctx.InternalServerError(goa.ErrInternal(err))
+			}
+
+			defer amqpConn.Close()
+
+			if err := amqpChan.Send("email-queue", body); err != nil {
 				c.Service.LogError("Register: failed to serialize email payload.", "err", err.Error())
 				return ctx.InternalServerError(goa.ErrInternal(err))
 			}
@@ -330,7 +344,15 @@ func (c *UserController) scheduleSendVerificationMail(userID string, profile *Us
 		return err
 	}
 
-	if err = c.ChannelRabbitMQ.Send("verification-email", body); err != nil {
+	amqpConn, amqpChan, err := c.createAmqpChannel(c.Config)
+	if err != nil {
+		return err
+	}
+	if amqpConn != nil {
+		defer amqpConn.Close()
+	}
+
+	if err = amqpChan.Send("verification-email", body); err != nil {
 		return err
 	}
 
@@ -448,4 +470,19 @@ type RestClientError struct {
 
 func (e *RestClientError) Error() string {
 	return fmt.Sprintf("%d %s %s", e.Code, e.StatusLine, e.Message)
+}
+
+func CreateRabbitmqChannel(cfg *config.Config) (*amqp.Connection, rabbitmq.Channel, error) {
+	connRabbitMQ, channelRabbitMQ, err := rabbitmq.Dial(
+		cfg.RabbitMQ["username"],
+		cfg.RabbitMQ["password"],
+		cfg.RabbitMQ["host"],
+		cfg.RabbitMQ["post"],
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return connRabbitMQ, &rabbitmq.AMQPChannel{
+		Channel: channelRabbitMQ,
+	}, nil
 }

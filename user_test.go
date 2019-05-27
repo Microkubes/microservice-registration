@@ -13,12 +13,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Microkubes/microservice-tools/rabbitmq"
+	"github.com/streadway/amqp"
+
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/Microkubes/microservice-registration/app"
 	"github.com/Microkubes/microservice-registration/app/test"
 	"github.com/Microkubes/microservice-registration/config"
-	"github.com/Microkubes/microservice-tools/rabbitmq"
 	"github.com/keitaroinc/goa"
 )
 
@@ -52,8 +54,12 @@ var _ = json.Unmarshal(configBytes, cfg)
 
 var (
 	service = goa.New("user-test")
-	ctrl    = NewUserController(service, cfg, &rabbitmq.MockAMQPChannel{}, &http.Client{})
+	ctrl    = NewUserController(service, cfg, CreateMockAmqpChannel, &http.Client{})
 )
+
+func CreateMockAmqpChannel(cfg *config.Config) (*amqp.Connection, rabbitmq.Channel, error) {
+	return nil, &rabbitmq.MockAMQPChannel{}, nil
+}
 
 func TestMain(m *testing.M) {
 	privkey, _ := rsa.GenerateKey(rand.Reader, 2048)
