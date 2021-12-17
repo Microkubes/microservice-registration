@@ -8,7 +8,6 @@ import (
 
 	"github.com/Microkubes/microservice-registration/app"
 	"github.com/Microkubes/microservice-registration/config"
-	"github.com/Microkubes/microservice-tools/gateway"
 	"github.com/Microkubes/microservice-tools/utils/healthcheck"
 	"github.com/Microkubes/microservice-tools/utils/version"
 	"github.com/keitaroinc/goa"
@@ -28,14 +27,6 @@ func main() {
 		service.LogError("config", "err", err)
 		panic(err)
 	}
-
-	registration := gateway.NewKongGateway(cfg.GatewayAdminURL, &http.Client{}, &cfg.Microservice)
-	err = registration.SelfRegister()
-	if err != nil {
-		panic(err)
-	}
-
-	defer registration.Unregister() // defer the unregister for after main exits
 
 	// Mount middleware
 	service.Use(middleware.RequestID())

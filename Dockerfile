@@ -12,8 +12,6 @@ RUN cd /go/src/github.com/Microkubes/microservice-registration && \
 ### Main
 FROM alpine:3.10
 
-ENV API_GATEWAY_URL="http://localhost:8001"
-
 COPY --from=build /go/src/github.com/Microkubes/microservice-registration/config.json /config.json
 COPY --from=build /go/bin/microservice-registration /usr/local/bin/microservice-registration
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
