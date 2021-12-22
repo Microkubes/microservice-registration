@@ -1,5 +1,5 @@
 ### Multi-stage build
-FROM golang:1.13.5-alpine3.10 as build
+FROM golang:1.17.3-alpine3.15 as build
 
 RUN apk --no-cache add git ca-certificates
 
@@ -10,7 +10,7 @@ RUN cd /go/src/github.com/Microkubes/microservice-registration && \
 
 
 ### Main
-FROM alpine:3.10
+FROM alpine:3.15
 
 COPY --from=build /go/src/github.com/Microkubes/microservice-registration/config.json /config.json
 COPY --from=build /go/bin/microservice-registration /usr/local/bin/microservice-registration

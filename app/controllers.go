@@ -67,8 +67,8 @@ type UserController interface {
 func MountUserController(service *goa.Service, ctrl UserController) {
 	initService(service)
 	var h goa.Handler
-	service.Mux.Handle("OPTIONS", "/users/register", ctrl.MuxHandler("preflight", handleUserOrigin(cors.HandlePreflight()), nil))
-	service.Mux.Handle("OPTIONS", "/users/register/resend-verification", ctrl.MuxHandler("preflight", handleUserOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/", ctrl.MuxHandler("preflight", handleUserOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/resend-verification", ctrl.MuxHandler("preflight", handleUserOrigin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -89,8 +89,8 @@ func MountUserController(service *goa.Service, ctrl UserController) {
 		return ctrl.Register(rctx)
 	}
 	h = handleUserOrigin(h)
-	service.Mux.Handle("POST", "/users/register", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
-	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /users/register")
+	service.Mux.Handle("POST", "/", ctrl.MuxHandler("register", h, unmarshalRegisterUserPayload))
+	service.LogInfo("mount", "ctrl", "User", "action", "Register", "route", "POST /")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -111,8 +111,8 @@ func MountUserController(service *goa.Service, ctrl UserController) {
 		return ctrl.ResendVerification(rctx)
 	}
 	h = handleUserOrigin(h)
-	service.Mux.Handle("POST", "/users/register/resend-verification", ctrl.MuxHandler("resendVerification", h, unmarshalResendVerificationUserPayload))
-	service.LogInfo("mount", "ctrl", "User", "action", "ResendVerification", "route", "POST /users/register/resend-verification")
+	service.Mux.Handle("POST", "/resend-verification", ctrl.MuxHandler("resendVerification", h, unmarshalResendVerificationUserPayload))
+	service.LogInfo("mount", "ctrl", "User", "action", "ResendVerification", "route", "POST /resend-verification")
 }
 
 // handleUserOrigin applies the CORS response headers corresponding to the origin.

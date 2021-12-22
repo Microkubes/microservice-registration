@@ -17,7 +17,7 @@ var _ = API("user", func() {
 
 // Resources group related API endpoints together.
 var _ = Resource("user", func() {
-	BasePath("users")
+	BasePath("/")
 
 	// Allow OPTIONS preflight request
 	Origin("*", func() {
@@ -27,7 +27,7 @@ var _ = Resource("user", func() {
 	// Actions define a single API endpoint
 	Action("register", func() {
 		Description("Creates user")
-		Routing(POST("/register"))
+		Routing(POST(""))
 		Payload(UserPayload)
 		Response(Created, UserMedia)
 		Response(BadRequest, ErrorMedia)
@@ -36,7 +36,7 @@ var _ = Resource("user", func() {
 
 	Action("resendVerification", func() {
 		Description("Resends verification email and resets valiation tokens")
-		Routing(POST("/register/resend-verification"))
+		Routing(POST("/resend-verification"))
 		Payload(ResendVerificationPayload)
 		Response(OK)
 		Response(BadRequest, ErrorMedia)

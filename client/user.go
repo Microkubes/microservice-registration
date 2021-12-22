@@ -21,7 +21,7 @@ import (
 // RegisterUserPath computes a request path to the register action of user.
 func RegisterUserPath() string {
 
-	return fmt.Sprintf("/users/register")
+	return fmt.Sprintf("/")
 }
 
 // Creates user
@@ -64,7 +64,7 @@ func (c *Client) NewRegisterUserRequest(ctx context.Context, path string, payloa
 // ResendVerificationUserPath computes a request path to the resendVerification action of user.
 func ResendVerificationUserPath() string {
 
-	return fmt.Sprintf("/users/register/resend-verification")
+	return fmt.Sprintf("/resend-verification")
 }
 
 // Resends verification email and resets valiation tokens

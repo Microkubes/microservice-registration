@@ -58,7 +58,7 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 	}
 	tmp1 := new(RegisterUserCommand)
 	sub = &cobra.Command{
-		Use:   `user ["/users/register"]`,
+		Use:   `user ["/"]`,
 		Short: ``,
 		Long: `
 
@@ -94,7 +94,7 @@ Payload example:
 	}
 	tmp2 := new(ResendVerificationUserCommand)
 	sub = &cobra.Command{
-		Use:   `user ["/users/register/resend-verification"]`,
+		Use:   `user ["/resend-verification"]`,
 		Short: ``,
 		Long: `
 
@@ -328,7 +328,7 @@ func (cmd *RegisterUserCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/users/register"
+		path = "/"
 	}
 	var payload client.UserPayload
 	if cmd.Payload != "" {
@@ -361,7 +361,7 @@ func (cmd *ResendVerificationUserCommand) Run(c *client.Client, args []string) e
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/users/register/resend-verification"
+		path = "/resend-verification"
 	}
 	var payload client.ResendVerificationPayload
 	if cmd.Payload != "" {

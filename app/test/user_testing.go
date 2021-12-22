@@ -59,7 +59,7 @@ func RegisterUserBadRequest(t goatest.TInterface, ctx context.Context, service *
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register"),
+		Path: fmt.Sprintf("/"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -139,7 +139,7 @@ func RegisterUserCreated(t goatest.TInterface, ctx context.Context, service *goa
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register"),
+		Path: fmt.Sprintf("/"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -223,7 +223,7 @@ func RegisterUserInternalServerError(t goatest.TInterface, ctx context.Context, 
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register"),
+		Path: fmt.Sprintf("/"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -302,7 +302,7 @@ func ResendVerificationUserBadRequest(t goatest.TInterface, ctx context.Context,
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register/resend-verification"),
+		Path: fmt.Sprintf("/resend-verification"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -381,7 +381,7 @@ func ResendVerificationUserInternalServerError(t goatest.TInterface, ctx context
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register/resend-verification"),
+		Path: fmt.Sprintf("/resend-verification"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -460,7 +460,7 @@ func ResendVerificationUserOK(t goatest.TInterface, ctx context.Context, service
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/users/register/resend-verification"),
+		Path: fmt.Sprintf("/resend-verification"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
